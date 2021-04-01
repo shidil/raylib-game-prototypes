@@ -21,63 +21,63 @@
 
 #include "raylib.h"
 
-int main() 
+int main()
 {
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+  // Initialization
+  //--------------------------------------------------------------------------------------
+  const int screenWidth = 800;
+  const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib");
+  InitWindow(screenWidth, screenHeight, "raylib");
 
-    Camera camera = { 0 };
-    camera.position = (Vector3){ 10.0f, 10.0f, 8.0f };
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camera.fovy = 60.0f;
-    camera.projection = CAMERA_PERSPECTIVE;
-    
-    SetCameraMode(camera, CAMERA_ORBITAL);
+  Camera camera = {0};
+  camera.position = (Vector3){10.0f, 10.0f, 8.0f};
+  camera.target = (Vector3){0.0f, 0.0f, 0.0f};
+  camera.up = (Vector3){0.0f, 1.0f, 0.0f};
+  camera.fovy = 60.0f;
+  camera.projection = CAMERA_PERSPECTIVE;
 
-    Vector3 cubePosition = { 0 };
+  SetCameraMode(camera, CAMERA_ORBITAL);
 
-    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
+  Vector3 cubePosition = {0};
 
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
-        // Update
-        //----------------------------------------------------------------------------------
-        UpdateCamera(&camera);
-        //----------------------------------------------------------------------------------
+  SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+  //--------------------------------------------------------------------------------------
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
+  // Main game loop
+  while (!WindowShouldClose()) // Detect window close button or ESC key
+  {
+    // Update
+    //----------------------------------------------------------------------------------
+    UpdateCamera(&camera);
+    //----------------------------------------------------------------------------------
 
-            ClearBackground(RAYWHITE);
+    // Draw
+    //----------------------------------------------------------------------------------
+    BeginDrawing();
 
-            BeginMode3D(camera);
+    ClearBackground(RAYWHITE);
 
-                DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
-                DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
-                DrawGrid(10, 1.0f);
+    BeginMode3D(camera);
 
-            EndMode3D();
+    DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+    DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+    DrawGrid(10, 1.0f);
 
-            DrawText("This is a raylib example", 10, 40, 20, DARKGRAY);
+    EndMode3D();
 
-            DrawFPS(10, 10);
+    DrawText("This is a raylib example", 10, 40, 20, DARKGRAY);
 
-        EndDrawing();
-        //----------------------------------------------------------------------------------
-    }
+    DrawFPS(10, 10);
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+    EndDrawing();
+    //----------------------------------------------------------------------------------
+  }
 
-    return 0;
+  // De-Initialization
+  //--------------------------------------------------------------------------------------
+  CloseWindow(); // Close window and OpenGL context
+  //--------------------------------------------------------------------------------------
+
+  return 0;
 }
