@@ -4,6 +4,11 @@
     "version": "2.0.0",
     "tasks": [
         {
+          "label": "clean",
+          "type": "shell",
+          "command": "rm build/game"
+        },
+        {
             "label": "build debug",
             "type": "process",
             "command": "make",
@@ -34,7 +39,8 @@
             },
             "problemMatcher": [
                 "$gcc"
-            ]
+            ],
+            "dependsOn": ["clean"]
         },
         {
             "label": "build release",
