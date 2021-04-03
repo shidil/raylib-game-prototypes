@@ -6,7 +6,7 @@
         {
           "label": "clean",
           "type": "shell",
-          "command": "rm build/game"
+          "command": "rm -f build/game"
         },
         {
             "label": "build debug",
