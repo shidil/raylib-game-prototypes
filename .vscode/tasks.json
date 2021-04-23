@@ -6,10 +6,41 @@
         {
           "label": "clean",
           "type": "shell",
-          "command": "rm -f build/game"
+          "command": "rm -rf build/bin"
         },
         {
-            "label": "build debug",
+          "label": "cmake-prepare-debug",
+          "type": "process",
+          "command": "cmake",
+          "args": [
+            "..",
+            "-G",
+            "Unix Makefiles",
+            "-DCMAKE_BUILD_TYPE=Debug"
+          ],
+          "options": {
+            "cwd": "build"
+          },
+          "dependsOn": ["clean"]
+        },
+        {
+          "label": "cmake-build-debug",
+          "type": "process",
+          "command": "cmake",
+          "args": [
+            "--build",
+            "."
+          ],
+          "dependsOn": ["cmake-prepare-debug"],
+          "problemMatcher": [
+              "$gcc"
+          ],
+          "options": {
+            "cwd": "build"
+          }
+        },
+        {
+            "label": "make-build-debug",
             "type": "process",
             "command": "make",
             "args": [
@@ -43,7 +74,7 @@
             "dependsOn": ["clean"]
         },
         {
-            "label": "build release",
+            "label": "make-build-release",
             "type": "process",
             "command": "make",
             "args": [

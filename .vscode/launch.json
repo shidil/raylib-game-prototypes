@@ -8,7 +8,7 @@
             "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/game",
+            "program": "${workspaceFolder}/build/bin/game",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -31,7 +31,7 @@
             "linux": {
               "miDebuggerPath": "/usr/bin/gdb",
             },
-            "preLaunchTask": "build debug"
+            "preLaunchTask": "cmake-build-debug"
           },
           {
             "name": "Run",

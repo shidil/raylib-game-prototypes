@@ -43,6 +43,7 @@
             "name": "Linux",
             "includePath": [
                 "/usr/local/include/**",
+                "~/.conan/data/**",
                 "${workspaceFolder}/**"
             ],
             "defines": [
