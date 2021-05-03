@@ -21,7 +21,7 @@
         {
             "name": "Mac",
             "includePath": [
-                "<path_to_raylib>/src/**",
+                "~/.conan/data/**",
                 "${workspaceFolder}/**"
             ],
             "defines": [

@@ -41,7 +41,7 @@ int main() {
   camera.rotation = 0.0f;
   camera.zoom = 1.0f;
 
-  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib");
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Snake Dancer");
   SetTargetFPS(10);  // Set our game to run at 144 frames-per-second
   //--------------------------------------------------------------------------------------
 
@@ -104,7 +104,7 @@ void moveSnake(vector<Vector2> &snake, Vector2 direction) {
 }
 
 void drawSnake(vector<Vector2> positions) {
-  for (int i; i < positions.size(); i++) {
-    DrawRectangle(positions[i].x, positions[i].y, SNAKE_SCALE, SNAKE_SCALE, MAROON);
+  for (int i = 0; i < positions.size(); i++) {
+    DrawRectangle(positions[i].x, positions[i].y, SNAKE_SCALE, SNAKE_SCALE, YELLOW);
   }
 }
