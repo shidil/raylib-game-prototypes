@@ -1,5 +1,6 @@
 [requires]
 raylib/3.5.0
+nlohmann_json/3.9.1
 
 [generators]
 cmake
