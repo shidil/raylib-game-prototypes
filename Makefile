@@ -26,7 +26,7 @@
 # Define required raylib variables
 PROJECT_NAME       ?= game
 RAYLIB_VERSION     ?= 3.5.0
-RAYLIB_PATH        ?= ..\..
+RAYLIB_PATH        ?= ../../
 
 # Define compiler path on Windows
 COMPILER_PATH      ?= C:/raylib/mingw/bin
@@ -184,6 +184,10 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     endif
 endif
 
+ifeq ($(PLATFORM),PLATFORM_WEB)
+    MAKE = make
+endif
+
 # Define compiler flags:
 #  -O0                  defines optimization level (no optimization, better for debugging)
 #  -O1                  defines optimization level
@@ -238,13 +242,13 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --profiling                # include information for code profiling
     # --memory-init-file 0       # to avoid an external memory initialization code file (.mem)
     # --preload-file resources   # specify a resources folder for data compilation
-    CFLAGS += -Os -s USE_GLFW=3 -s TOTAL_MEMORY=16777216 --preload-file resources
+    CFLAGS += -Os -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=67108864 --preload-file resources
     ifeq ($(BUILD_MODE), DEBUG)
         CFLAGS += -s ASSERTIONS=1 --profiling
     endif
 
     # Define a custom shell .html and output extension
-    CFLAGS += --shell-file $(RAYLIB_PATH)/src/shell.html
+    CFLAGS += --shell-file src/shell.html
     EXT = .html
 endif
 
@@ -345,7 +349,7 @@ ifeq ($(PLATFORM),PLATFORM_RPI)
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     # Libraries for web (HTML5) compiling
-    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.bc
+    LDLIBS = $(RAYLIB_RELEASE_PATH)/libraylib.a
 endif
 
 # Define a recursive wildcard function
@@ -358,7 +362,7 @@ OBJ_DIR = obj
 # Define all object files from source files
 SRC = $(call rwildcard, *.c, *.h)
 #OBJS = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
-OBJS ?= src/main.cpp
+OBJS ?= src/$(PROJECT_NAME).cpp
 
 # For Android platform we call a custom Makefile.Android
 ifeq ($(PLATFORM),PLATFORM_ANDROID)
