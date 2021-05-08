@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <random>
 #include <vector>
 
 #include "utils/camera-2d.hpp"
@@ -263,11 +264,13 @@ Color get_random_color() { return color_list[GetRandomValue(0, 4)]; }
 vector<Letter> generate_letters(char *word1, char *word2) {
   string shuffled_word = word1;
   string modifier = word2;
+  random_device rd;
+  mt19937 g(rd());
 
   // Letters get shuffled
-  random_shuffle(modifier.begin(), modifier.end());
+  shuffle(modifier.begin(), modifier.end(), g);
   shuffled_word.append(modifier.substr(0, 2));
-  random_shuffle(shuffled_word.begin(), shuffled_word.end());
+  shuffle(shuffled_word.begin(), shuffled_word.end(), g);
 
   vector<Letter> letters = {};
   int row = 100;

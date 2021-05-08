@@ -11,6 +11,8 @@
 "C_Cpp.clang_format_fallbackStyle": "{ BasedOnStyle: Google, IndentWidth: 2 }",
 "files.associations": {
 	"iostream": "cpp",
-	"vector": "cpp"
+	"vector": "cpp",
+	"algorithm": "cpp",
+	"string": "cpp"
 }
 }
