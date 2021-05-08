@@ -47,14 +47,20 @@ typedef struct GameLevel {
   Button word2_button;
 } GameLevel;
 
-char *get_random_word(bomaqs::word_dict, short);
+enum Answer {
+  CORRECT_ANSWER,
+  WRONG_ANSWER,
+  NO_ANSWER,
+};
+
 vector<Letter> generate_letters(char *, char *);
 GameLevel generate_level(bomaqs::word_dict, short);
+Answer check_answer(GameLevel, Vector2);
+Color get_random_color(void);
+char *get_random_word(bomaqs::word_dict, short);
 void draw_level(GameLevel, Font);
 void draw_game_over(int);
 void draw_hud(GameLevel, int);
-bool check_answer(GameLevel, Vector2);
-Color get_random_color(void);
 
 int main() {
   // Initialization
@@ -109,14 +115,17 @@ int main() {
     touch_point = GetTouchPosition(0);
 
     if (current_gesture != last_gesture && current_gesture == GESTURE_TAP) {
-      // TODO: fix wrong error showing when clicking anywhere else
-      if (check_answer(level, touch_point) && game_running) {
-        score += GAME_SPEED;
-        level = generate_level(word_dictionary, GAME_DIFFICULTY);
-        PlaySoundMulti(correct_answer_sfx);
-      } else if (game_running) {
-        game_running = false;
-        PlaySoundMulti(wrong_answer_sfx);
+      auto answer = check_answer(level, touch_point);
+
+      if (game_running) {
+        if (answer == CORRECT_ANSWER) {
+          score += GAME_SPEED;
+          level = generate_level(word_dictionary, GAME_DIFFICULTY);
+          PlaySoundMulti(correct_answer_sfx);
+        } else if (answer == WRONG_ANSWER) {
+          game_running = false;
+          PlaySoundMulti(wrong_answer_sfx);
+        }
       }
     }
 
@@ -213,28 +222,28 @@ void draw_hud(GameLevel level, int score) {
            SCREEN_WIDTH - 100, 10, REGULAR_SIZE, ORANGE);
 }
 
-bool check_answer(GameLevel level, Vector2 touch_point) {
+Answer check_answer(GameLevel level, Vector2 touch_point) {
   // correct answer on left
   if (level.button_order == 0) {
     if (CheckCollisionPointRec(touch_point, level.word1_button.bounds)) {
-      return true;
+      return CORRECT_ANSWER;
     }
 
     if (CheckCollisionPointRec(touch_point, level.word2_button.bounds)) {
-      return false;
+      return WRONG_ANSWER;
     }
   }
 
   // correct answer on the right
   if (CheckCollisionPointRec(touch_point, level.word2_button.bounds)) {
-    return true;
+    return CORRECT_ANSWER;
   }
 
   if (CheckCollisionPointRec(touch_point, level.word1_button.bounds)) {
-    return false;
+    return WRONG_ANSWER;
   }
 
-  return false;
+  return NO_ANSWER;
 }
 
 void draw_game_over(int score) {
