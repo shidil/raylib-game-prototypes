@@ -1,8 +1,8 @@
 #include <raylib.h>
 
-#include <cstdlib>
+#include <algorithm>
+#include <cstring>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <vector>
 
 #include "utils/camera-2d.hpp"
@@ -46,9 +46,9 @@ typedef struct GameLevel {
   Button word2_button;
 } GameLevel;
 
-char *get_random_word(nlohmann::json, short);
+char *get_random_word(bomaqs::word_dict, short);
 vector<Letter> generate_letters(char *, char *);
-GameLevel generate_level(nlohmann::json, short);
+GameLevel generate_level(bomaqs::word_dict, short);
 void draw_level(GameLevel, Font);
 void draw_game_over(int);
 void draw_hud(GameLevel, int);
@@ -57,7 +57,7 @@ Color get_random_color(void);
 
 int main() {
   // Initialization
-  auto word_dictionary = bomaqs::load_from_json("word-data.json");
+  auto word_dictionary = bomaqs::load_word_dictionary("word-list.txt");
   auto camera = bomaqs::create2dCamera();
 
   SetConfigFlags(FLAG_MSAA_4X_HINT);
@@ -108,6 +108,7 @@ int main() {
     touch_point = GetTouchPosition(0);
 
     if (current_gesture != last_gesture && current_gesture == GESTURE_TAP) {
+      // TODO: fix wrong error showing when clicking anywhere else
       if (check_answer(level, touch_point) && game_running) {
         score += GAME_SPEED;
         level = generate_level(word_dictionary, GAME_DIFFICULTY);
@@ -146,7 +147,7 @@ int main() {
   return 0;
 }
 
-GameLevel generate_level(nlohmann::json word_dictionary, short difficulty) {
+GameLevel generate_level(bomaqs::word_dict word_dictionary, short difficulty) {
   short word1_length = GetRandomValue(difficulty, difficulty + 1);
   short word2_length =
       word1_length + GetRandomValue(word1_length == 3 ? 0 : -1, 1);
@@ -156,7 +157,6 @@ GameLevel generate_level(nlohmann::json word_dictionary, short difficulty) {
 
   vector<Letter> letters = generate_letters(word1, word2);
 
-  short button_order = GetRandomValue(0, 1);
   Button word1_button = {.title = word1,
                          .bounds = (Rectangle){50, SCREEN_HEIGHT - 50,
                                                (SCREEN_WIDTH / 2 - 50), 50},
@@ -166,8 +166,6 @@ GameLevel generate_level(nlohmann::json word_dictionary, short difficulty) {
       word2,
       (Rectangle){SCREEN_WIDTH / 2, SCREEN_HEIGHT - 50, SCREEN_WIDTH / 2, 50},
       get_random_color()};
-
-  float timer = GAME_SPEED;
 
   return (GameLevel){
       .timer = GAME_SPEED,
@@ -181,7 +179,8 @@ GameLevel generate_level(nlohmann::json word_dictionary, short difficulty) {
 
 void draw_level(GameLevel level, Font font) {
   // Draw letters
-  for (int i = 0; i < level.letters.size(); i++) {
+  int count_letters = level.letters.size();
+  for (int i = 0; i < count_letters; i++) {
     auto letter = level.letters[i];
     char text[2] = {letter.value, '\0'};
 
@@ -245,9 +244,9 @@ void draw_game_over(int score) {
   DrawText(scoreMessage.c_str(), 100, 320, REGULAR_SIZE, ORANGE);
 }
 
-char *get_random_word(nlohmann::json word_dictionary, short length) {
+char *get_random_word(bomaqs::word_dict word_dictionary, short length) {
   // Get random word from list of words of given length
-  auto wordList = word_dictionary[to_string(length)];
+  auto wordList = word_dictionary[length];
   unsigned int index = rand() % (wordList.size() - 1);
   string word = (string)wordList[index];
 
@@ -274,7 +273,8 @@ vector<Letter> generate_letters(char *word1, char *word2) {
   int row = 100;
   int per_column = GetRandomValue(2, 3);
   int column = 1;
-  for (int i = 0; i < shuffled_word.length(); i++) {
+  int count_letters = shuffled_word.length();
+  for (int i = 0; i < count_letters; i++) {
     if (column == per_column) {
       row += 100;
       column = 1;
