@@ -4,7 +4,7 @@
 #include <iostream>
 #include <map>
 
-#define ASSET_BASE_DIR "data/";
+#define ASSET_BASE_DIR "./resources/";
 
 namespace bomaqs {
 
