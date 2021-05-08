@@ -63,7 +63,7 @@ void draw_game_over(int);
 void draw_hud(GameLevel, int);
 
 int main() {
-  // Initialization
+  //---- Initialization
   auto word_dictionary = bomaqs::load_word_dictionary("word-list.txt");
   auto camera = bomaqs::create2dCamera();
 
@@ -91,13 +91,13 @@ int main() {
   int current_gesture = GESTURE_NONE;
   int last_gesture = GESTURE_NONE;
 
-  // Main game loop
+  //---- Main game loop
   while (!WindowShouldClose()) {
-    // Update
+    //---- Update
     UpdateMusicStream(music);
-    level.timer -= GetFrameTime();
 
     // game over condition 1 timeout
+    level.timer -= GetFrameTime();
     if (level.timer <= 0) {
       game_running = false;
     }
@@ -115,21 +115,24 @@ int main() {
     touch_point = GetTouchPosition(0);
 
     if (current_gesture != last_gesture && current_gesture == GESTURE_TAP) {
-      auto answer = check_answer(level, touch_point);
-
       if (game_running) {
-        if (answer == CORRECT_ANSWER) {
-          score += GAME_SPEED;
-          level = generate_level(word_dictionary, GAME_DIFFICULTY);
-          PlaySoundMulti(correct_answer_sfx);
-        } else if (answer == WRONG_ANSWER) {
-          game_running = false;
-          PlaySoundMulti(wrong_answer_sfx);
+        switch (check_answer(level, touch_point)) {
+          case CORRECT_ANSWER:
+            score += GAME_SPEED;
+            level = generate_level(word_dictionary, GAME_DIFFICULTY);
+            PlaySoundMulti(correct_answer_sfx);
+            break;
+          case WRONG_ANSWER:
+            game_running = false;
+            PlaySoundMulti(wrong_answer_sfx);
+            break;
+          default:
+            break;
         }
       }
     }
 
-    // Draw
+    //---- Draw
     BeginDrawing();
     ClearBackground(RAYWHITE);
     BeginMode2D(camera);
@@ -146,13 +149,13 @@ int main() {
     EndDrawing();
   }
 
-  // De-Initialization
+  //---- De-Initialization
   StopSoundMulti();
   UnloadMusicStream(music);
   UnloadSound(correct_answer_sfx);
   UnloadSound(wrong_answer_sfx);
   CloseAudioDevice();
-  CloseWindow();  // Close window and OpenGL context
+  CloseWindow();
 
   return 0;
 }
