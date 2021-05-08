@@ -72,11 +72,10 @@ int main() {
   InitAudioDevice();
 
   // Resources
-  string basePath = ASSET_BASE_DIR;
   Font font = GetFontDefault();
-  Sound wrong_answer_sfx = LoadSound("data/wrong.wav");
-  Sound correct_answer_sfx = LoadSound("data/select.wav");
-  Music music = LoadMusicStream("data/mini1111.ogg");
+  Sound wrong_answer_sfx = LoadSound("./resources/wrong.wav");
+  Sound correct_answer_sfx = LoadSound("./resources/select.wav");
+  Music music = LoadMusicStream("./resources/mini1111.ogg");
 
   PlayMusicStream(music);
   SetTargetFPS(DEFAULT_FPS);
@@ -129,6 +128,10 @@ int main() {
           default:
             break;
         }
+      } else {
+        score = 0;
+        game_running = true;
+        level = generate_level(word_dictionary, GAME_DIFFICULTY);
       }
     }
 
