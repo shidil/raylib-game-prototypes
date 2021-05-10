@@ -8,32 +8,31 @@
 
 #include "utils/camera-2d.hpp"
 #include "utils/data-loader.hpp"
-#include "utils/math.hpp"
 
 #define WINDOW_TITLE "Word Game"
 #define SCREEN_WIDTH 360
 #define SCREEN_HEIGHT 640
 #define DEFAULT_FPS 60
-#define GAME_SPEED 5
+#define GAME_SPEED 3
 #define GAME_DIFFICULTY 3
 #define GAME_OVER_MESSAGE "Failed!"
 #define GAME_OVER_SCORE_TEXT "Your score: "
 
-#define ANSWER_SIZE 24
-#define LETTER_SIZE 48
+#define ANSWER_SIZE 32
+#define LETTER_SIZE 64
 #define REGULAR_SIZE 20
 
 using namespace std;
 
 typedef struct Letter {
   char value;
-  int x;
-  int y;
+  float x;
+  float y;
   Color color;
 } Letter;
 
 typedef struct Button {
-  char *title;
+  char* title;
   Rectangle bounds;
   Color color;
 } Button;
@@ -53,12 +52,12 @@ enum Answer {
   NO_ANSWER,
 };
 
-vector<Letter> generate_letters(char *, char *);
+vector<Letter> generate_letters(char*, char*);
 GameLevel generate_level(bomaqs::word_dict, short);
 Answer check_answer(GameLevel, Vector2);
 Color get_random_color(void);
-char *get_random_word(bomaqs::word_dict, short);
-void draw_level(GameLevel, Font);
+char* get_random_word(bomaqs::word_dict, short);
+void draw_level(GameLevel, Font, Font);
 void draw_game_over(int);
 void draw_hud(GameLevel, int);
 
@@ -72,10 +71,11 @@ int main() {
   InitAudioDevice();
 
   // Resources
-  Font font = GetFontDefault();
-  Sound wrong_answer_sfx = LoadSound("./resources/wrong.wav");
-  Sound correct_answer_sfx = LoadSound("./resources/select.wav");
-  Music music = LoadMusicStream("./resources/mini1111.ogg");
+  Font letter_font = bomaqs::load_font("Cousine-Regular.ttf", LETTER_SIZE);
+  Font button_font = bomaqs::load_font("IBMPlexMono-Regular.ttf", ANSWER_SIZE);
+  Sound wrong_answer_sfx = bomaqs::load_sound("wrong.wav");
+  Sound correct_answer_sfx = bomaqs::load_sound("select.wav");
+  Music music = bomaqs::load_music("mini1111.ogg");
 
   PlayMusicStream(music);
   SetTargetFPS(DEFAULT_FPS);
@@ -142,7 +142,7 @@ int main() {
 
     // Draw game world
     if (game_running) {
-      draw_level(level, font);
+      draw_level(level, letter_font, button_font);
       draw_hud(level, score);
     } else {
       draw_game_over(score);
@@ -168,19 +168,19 @@ GameLevel generate_level(bomaqs::word_dict word_dictionary, short difficulty) {
   short word2_length =
       word1_length + GetRandomValue(word1_length == 3 ? 0 : -1, 1);
 
-  char *word1 = get_random_word(word_dictionary, word1_length);
-  char *word2 = get_random_word(word_dictionary, word2_length);
+  char* word1 = get_random_word(word_dictionary, word1_length);
+  char* word2 = get_random_word(word_dictionary, word2_length);
 
   vector<Letter> letters = generate_letters(word1, word2);
 
   Button word1_button = {.title = word1,
-                         .bounds = (Rectangle){50, SCREEN_HEIGHT - 50,
+                         .bounds = (Rectangle){50, SCREEN_HEIGHT - 60,
                                                (SCREEN_WIDTH / 2 - 50), 50},
                          .color = get_random_color()};
 
   Button word2_button = {
       word2,
-      (Rectangle){SCREEN_WIDTH / 2, SCREEN_HEIGHT - 50, SCREEN_WIDTH / 2, 50},
+      (Rectangle){SCREEN_WIDTH / 2, SCREEN_HEIGHT - 60, SCREEN_WIDTH / 2, 50},
       get_random_color()};
 
   return (GameLevel){
@@ -193,27 +193,32 @@ GameLevel generate_level(bomaqs::word_dict word_dictionary, short difficulty) {
   };
 }
 
-void draw_level(GameLevel level, Font font) {
+void draw_level(GameLevel level, Font letter_font, Font button_font) {
   // Draw letters
   int count_letters = level.letters.size();
   for (int i = 0; i < count_letters; i++) {
     auto letter = level.letters[i];
     char text[2] = {letter.value, '\0'};
 
-    DrawText(text, letter.x, letter.y, LETTER_SIZE, letter.color);
+    DrawTextEx(letter_font, text, (Vector2){letter.x, letter.y}, LETTER_SIZE, 0,
+               letter.color);
   }
 
   // Correct answer is positioned randomly based on`button_order`
   if (level.button_order == 0) {
-    DrawTextRec(font, level.word1_button.title, level.word1_button.bounds,
-                ANSWER_SIZE, 12.0f, false, level.word1_button.color);
-    DrawTextRec(font, level.word2_button.title, level.word2_button.bounds,
-                ANSWER_SIZE, 12.0f, false, level.word2_button.color);
+    DrawTextRec(button_font, level.word1_button.title,
+                level.word1_button.bounds, ANSWER_SIZE, 12.0f, false,
+                level.word1_button.color);
+    DrawTextRec(button_font, level.word2_button.title,
+                level.word2_button.bounds, ANSWER_SIZE, 12.0f, false,
+                level.word2_button.color);
   } else {
-    DrawTextRec(font, level.word1_button.title, level.word2_button.bounds,
-                ANSWER_SIZE, 12.0f, false, level.word1_button.color);
-    DrawTextRec(font, level.word2_button.title, level.word1_button.bounds,
-                ANSWER_SIZE, 12.0f, false, level.word2_button.color);
+    DrawTextRec(button_font, level.word1_button.title,
+                level.word2_button.bounds, ANSWER_SIZE, 12.0f, false,
+                level.word1_button.color);
+    DrawTextRec(button_font, level.word2_button.title,
+                level.word1_button.bounds, ANSWER_SIZE, 12.0f, false,
+                level.word2_button.color);
   }
 }
 
@@ -221,11 +226,11 @@ void draw_hud(GameLevel level, int score) {
   // Score
   string scoreText = "Score: ";
   DrawText(scoreText.append(to_string(score)).c_str(), 20, 10, REGULAR_SIZE,
-           PURPLE);
+           GRAY);
 
   // Time remaining
-  DrawText(to_string(bomaqs::to_fixed(level.timer, 2)).c_str(),
-           SCREEN_WIDTH - 100, 10, REGULAR_SIZE, ORANGE);
+  DrawText(TextFormat("%02.02f", level.timer), SCREEN_WIDTH - 60, 10,
+           REGULAR_SIZE, ORANGE);
 }
 
 Answer check_answer(GameLevel level, Vector2 touch_point) {
@@ -260,23 +265,24 @@ void draw_game_over(int score) {
   DrawText(scoreMessage.c_str(), 100, 320, REGULAR_SIZE, ORANGE);
 }
 
-char *get_random_word(bomaqs::word_dict word_dictionary, short length) {
+char* get_random_word(bomaqs::word_dict word_dictionary, short length) {
   // Get random word from list of words of given length
   auto wordList = word_dictionary[length];
   unsigned int index = rand() % (wordList.size() - 1);
   string word = (string)wordList[index];
 
-  char *buffer = new char[length];
+  char* buffer = new char[length];
   strcpy(buffer, word.c_str());
 
   return buffer;
 }
 
-Color color_list[5] = {RED, MAROON, BLUE, VIOLET, DARKGRAY};
+Color color_list[10] = {RED,   MAROON,   BLUE,  VIOLET, DARKGRAY,
+                        DARKGREEN, DARKBLUE, BLACK, PURPLE, MAGENTA};
 
-Color get_random_color() { return color_list[GetRandomValue(0, 4)]; }
+Color get_random_color() { return color_list[GetRandomValue(0, 9)]; }
 
-vector<Letter> generate_letters(char *word1, char *word2) {
+vector<Letter> generate_letters(char* word1, char* word2) {
   string shuffled_word = word1;
   string modifier = word2;
   random_device rd;
@@ -303,8 +309,8 @@ vector<Letter> generate_letters(char *word1, char *word2) {
 
     letters.push_back((Letter){
         .value = shuffled_word[i],
-        .x = column * 80,
-        .y = row,
+        .x = (float)column * 80,
+        .y = (float)row,
         .color = get_random_color(),
     });
   }
