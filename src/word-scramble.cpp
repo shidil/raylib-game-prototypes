@@ -15,14 +15,31 @@
 #define DEFAULT_FPS 60
 #define GAME_SPEED 3
 #define GAME_DIFFICULTY 3
-#define GAME_OVER_MESSAGE "Failed!"
+#define GAME_OVER_TIMEOUT_MESSAGE "Time out!"
+#define GAME_OVER_INCORRECT_MESSAGE "Wrong answer!"
 #define GAME_OVER_SCORE_TEXT "Your score: "
 
 #define ANSWER_SIZE 32
 #define LETTER_SIZE 64
 #define REGULAR_SIZE 20
 
+#define ALL_ALPHABETS "abcdefghijklmnopqrstuvwxyz"
+
 using namespace std;
+
+enum Answer {
+  CORRECT_ANSWER,
+  WRONG_ANSWER,
+  NO_ANSWER,
+};
+
+enum LevelAnswer {
+  LEFT_WORD,
+  RIGHT_WORD,
+  BOTH_WORDS,
+};
+
+typedef short Chance;
 
 typedef struct Letter {
   char value;
@@ -39,26 +56,20 @@ typedef struct Button {
 
 typedef struct GameLevel {
   float timer;
-  short button_order;
   short base_word_length;
   vector<Letter> letters;
   Button word1_button;
   Button word2_button;
+  LevelAnswer answer;
 } GameLevel;
 
-enum Answer {
-  CORRECT_ANSWER,
-  WRONG_ANSWER,
-  NO_ANSWER,
-};
-
-vector<Letter> generate_letters(char*, char*);
+vector<Letter> generate_letters(string, string);
 GameLevel generate_level(bomaqs::word_dict, short);
 Answer check_answer(GameLevel, Vector2);
 Color get_random_color(void);
 char* get_random_word(bomaqs::word_dict, short);
 void draw_level(GameLevel, Font, Font);
-void draw_game_over(int);
+void draw_game_over(int, string);
 void draw_background(Texture2D);
 void draw_hud(GameLevel, int);
 
@@ -97,17 +108,13 @@ int main() {
     //---- Update
     UpdateMusicStream(music);
 
-    // game over condition 1 timeout
-    level.timer -= GetFrameTime();
-    if (level.timer <= 0) {
-      game_running = false;
+    if (game_running) {
+      level.timer -= GetFrameTime();
     }
 
-    // Restart game
-    if (IsKeyDown(KEY_R)) {
-      score = 0;
-      game_running = true;
-      level = generate_level(word_dictionary, GAME_DIFFICULTY);
+    // game over condition 1 timeout
+    if (level.timer <= 0) {
+      game_running = false;
     }
 
     // Check button press, correct answer go to next level, give score
@@ -145,10 +152,12 @@ int main() {
     // Draw game world
     if (game_running) {
       // draw_background(background);
-      draw_level(level, letter_font, button_font);
       draw_hud(level, score);
+      draw_level(level, letter_font, button_font);
     } else {
-      draw_game_over(score);
+      auto message = level.timer <= 0 ? GAME_OVER_TIMEOUT_MESSAGE
+                                      : GAME_OVER_INCORRECT_MESSAGE;
+      draw_game_over(score, message);
     }
 
     EndMode2D();
@@ -186,13 +195,30 @@ GameLevel generate_level(bomaqs::word_dict word_dictionary, short difficulty) {
       (Rectangle){SCREEN_WIDTH / 2, SCREEN_HEIGHT - 60, SCREEN_WIDTH / 2, 50},
       get_random_color()};
 
+  auto answer_order = static_cast<LevelAnswer>(GetRandomValue(0, 2));
+  string answer = answer_order == RIGHT_WORD ? word2 : word1;
+  string seed = answer_order == BOTH_WORDS ? word2 : "";
+
+  if (answer_order != BOTH_WORDS) {
+    string all_alphabets = ALL_ALPHABETS;
+    string wrong_answer = answer_order == RIGHT_WORD ? word1 : word2;
+
+    // If there is only one correct answer, set seed to all alphabets except
+    // ones present in the wrong answer
+    for (int i = 0; i < all_alphabets.size(); i++) {
+      if (wrong_answer.find(all_alphabets[i]) == -1) {
+        seed.push_back(all_alphabets[i]);
+      }
+    }
+  }
+
   return (GameLevel){
       .timer = GAME_SPEED,
-      .button_order = (short)GetRandomValue(0, 1),
       .base_word_length = difficulty,
-      .letters = generate_letters(word1, word2),
+      .letters = generate_letters(answer, seed),
       .word1_button = word1_button,
       .word2_button = word2_button,
+      .answer = answer_order,
   };
 }
 
@@ -212,21 +238,10 @@ void draw_level(GameLevel level, Font letter_font, Font button_font) {
   }
 
   // Correct answer is positioned randomly based on`button_order`
-  if (level.button_order == 0) {
-    DrawTextRec(button_font, level.word1_button.title,
-                level.word1_button.bounds, ANSWER_SIZE, 12.0f, false,
-                level.word1_button.color);
-    DrawTextRec(button_font, level.word2_button.title,
-                level.word2_button.bounds, ANSWER_SIZE, 12.0f, false,
-                level.word2_button.color);
-  } else {
-    DrawTextRec(button_font, level.word1_button.title,
-                level.word2_button.bounds, ANSWER_SIZE, 12.0f, false,
-                level.word1_button.color);
-    DrawTextRec(button_font, level.word2_button.title,
-                level.word1_button.bounds, ANSWER_SIZE, 12.0f, false,
-                level.word2_button.color);
-  }
+  DrawTextRec(button_font, level.word1_button.title, level.word1_button.bounds,
+              ANSWER_SIZE, 12.0f, false, level.word1_button.color);
+  DrawTextRec(button_font, level.word2_button.title, level.word2_button.bounds,
+              ANSWER_SIZE, 12.0f, false, level.word2_button.color);
 }
 
 void draw_hud(GameLevel level, int score) {
@@ -241,35 +256,23 @@ void draw_hud(GameLevel level, int score) {
 }
 
 Answer check_answer(GameLevel level, Vector2 touch_point) {
-  // correct answer on left
-  if (level.button_order == 0) {
-    if (CheckCollisionPointRec(touch_point, level.word1_button.bounds)) {
-      return CORRECT_ANSWER;
-    }
-
-    if (CheckCollisionPointRec(touch_point, level.word2_button.bounds)) {
-      return WRONG_ANSWER;
-    }
-  }
-
-  // correct answer on the right
-  if (CheckCollisionPointRec(touch_point, level.word2_button.bounds)) {
-    return CORRECT_ANSWER;
-  }
-
   if (CheckCollisionPointRec(touch_point, level.word1_button.bounds)) {
-    return WRONG_ANSWER;
+    return (level.answer != RIGHT_WORD) ? CORRECT_ANSWER : WRONG_ANSWER;
+  }
+
+  if (CheckCollisionPointRec(touch_point, level.word2_button.bounds)) {
+    return (level.answer != LEFT_WORD) ? CORRECT_ANSWER : WRONG_ANSWER;
   }
 
   return NO_ANSWER;
 }
 
-void draw_game_over(int score) {
+void draw_game_over(int score, string message) {
   string scoreMessage = GAME_OVER_SCORE_TEXT;
 
   scoreMessage.append(to_string(score));
-  DrawText(GAME_OVER_MESSAGE, 140, 280, REGULAR_SIZE, MAROON);
-  DrawText(scoreMessage.c_str(), 100, 320, REGULAR_SIZE, ORANGE);
+  DrawText(message.data(), 140, 280, REGULAR_SIZE, MAROON);
+  DrawText(scoreMessage.data(), 100, 320, REGULAR_SIZE, ORANGE);
 }
 
 char* get_random_word(bomaqs::word_dict word_dictionary, short length) {
@@ -289,15 +292,15 @@ Color color_list[10] = {RED,       MAROON,   BLUE,  VIOLET, DARKGRAY,
 
 Color get_random_color() { return color_list[GetRandomValue(0, 9)]; }
 
-vector<Letter> generate_letters(char* word1, char* word2) {
-  string shuffled_word = word1;
-  string modifier = word2;
-  random_device rd;
-  mt19937 g(rd());
+vector<Letter> generate_letters(string answer, string seed) {
+  string shuffled_word = answer;
+  string modifier = seed;
 
   // Letters get shuffled
+  random_device rd;
+  mt19937 g(rd());
   shuffle(modifier.begin(), modifier.end(), g);
-  shuffled_word.append(modifier.substr(0, 2));
+  shuffled_word.append(modifier.substr(0, 3));
   shuffle(shuffled_word.begin(), shuffled_word.end(), g);
 
   vector<Letter> letters = {};
