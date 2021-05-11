@@ -184,6 +184,10 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     MAKE = make
 endif
 
+ifeq ($(PLATFORM),PLATFORM_ANDROID)
+    MAKE = make
+endif
+
 # Define compiler flags:
 #  -O0                  defines optimization level (no optimization, better for debugging)
 #  -O1                  defines optimization level

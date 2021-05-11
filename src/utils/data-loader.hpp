@@ -4,7 +4,7 @@
 #include <iostream>
 #include <map>
 
-#define ASSET_BASE_DIR "./resources/";
+#define ASSET_BASE_DIR "resources/";
 
 namespace bomaqs {
 
@@ -27,6 +27,10 @@ Sound load_sound(std::string file) {
 
 Music load_music(std::string file) {
   return LoadMusicStream(get_real_path(file).data());
+}
+
+Texture2D load_texture(std::string file) {
+  return LoadTexture(get_real_path(file).data());
 }
 
 Font load_sdf_font(std::string font_name, int base_size = 16,

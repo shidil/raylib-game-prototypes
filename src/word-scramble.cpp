@@ -10,7 +10,7 @@
 #include "utils/data-loader.hpp"
 
 #define WINDOW_TITLE "Word Game"
-#define SCREEN_WIDTH 360
+#define SCREEN_WIDTH 364
 #define SCREEN_HEIGHT 640
 #define DEFAULT_FPS 60
 #define GAME_SPEED 3
@@ -59,18 +59,20 @@ Color get_random_color(void);
 char* get_random_word(bomaqs::word_dict, short);
 void draw_level(GameLevel, Font, Font);
 void draw_game_over(int);
+void draw_background(Texture2D);
 void draw_hud(GameLevel, int);
 
 int main() {
   //---- Initialization
-  auto word_dictionary = bomaqs::load_word_dictionary("word-list.txt");
   auto camera = bomaqs::create2dCamera();
 
-  SetConfigFlags(FLAG_MSAA_4X_HINT);
+  // SetConfigFlags(FLAG_MSAA_4X_HINT);
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, WINDOW_TITLE);
   InitAudioDevice();
 
   // Resources
+  auto word_dictionary = bomaqs::load_word_dictionary("word-list.txt");
+  // Texture2D background = bomaqs::load_texture("bg1-original.png");
   Font letter_font = bomaqs::load_font("Cousine-Regular.ttf", LETTER_SIZE);
   Font button_font = bomaqs::load_font("IBMPlexMono-Regular.ttf", ANSWER_SIZE);
   Sound wrong_answer_sfx = bomaqs::load_sound("wrong.wav");
@@ -142,6 +144,7 @@ int main() {
 
     // Draw game world
     if (game_running) {
+      // draw_background(background);
       draw_level(level, letter_font, button_font);
       draw_hud(level, score);
     } else {
@@ -191,6 +194,10 @@ GameLevel generate_level(bomaqs::word_dict word_dictionary, short difficulty) {
       .word1_button = word1_button,
       .word2_button = word2_button,
   };
+}
+
+void draw_background(Texture2D background) {
+  DrawTextureEx(background, (Vector2){0, 0}, 0.0f, 0.5f, WHITE);
 }
 
 void draw_level(GameLevel level, Font letter_font, Font button_font) {
@@ -277,7 +284,7 @@ char* get_random_word(bomaqs::word_dict word_dictionary, short length) {
   return buffer;
 }
 
-Color color_list[10] = {RED,   MAROON,   BLUE,  VIOLET, DARKGRAY,
+Color color_list[10] = {RED,       MAROON,   BLUE,  VIOLET, DARKGRAY,
                         DARKGREEN, DARKBLUE, BLACK, PURPLE, MAGENTA};
 
 Color get_random_color() { return color_list[GetRandomValue(0, 9)]; }
