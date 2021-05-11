@@ -46,10 +46,14 @@ int main() {
   //--------------------------------------------------------------------------------------
 
   vector<Vector2> positions = {
-      (Vector2){2 + SNAKE_SCALE, SCREEN_HEIGHT / 2}, (Vector2){3 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
-      (Vector2){4 + SNAKE_SCALE, SCREEN_HEIGHT / 2}, (Vector2){5 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
-      (Vector2){6 + SNAKE_SCALE, SCREEN_HEIGHT / 2}, (Vector2){7 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
-      (Vector2){8 + SNAKE_SCALE, SCREEN_HEIGHT / 2}, (Vector2){9 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){2 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){3 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){4 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){5 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){6 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){7 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){8 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
+      (Vector2){9 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
   };
 
   Vector2 direction = {1, 0};
@@ -65,8 +69,7 @@ int main() {
     } else if (IsKeyDown(KEY_DOWN)) {
       direction.y = 1;
       direction.x = 0;
-    }
-    else if (IsKeyDown(KEY_UP)) {
+    } else if (IsKeyDown(KEY_UP)) {
       direction.y = -1;
       direction.x = 0;
     }
@@ -105,6 +108,7 @@ void moveSnake(vector<Vector2> &snake, Vector2 direction) {
 
 void drawSnake(vector<Vector2> positions) {
   for (int i = 0; i < positions.size(); i++) {
-    DrawRectangle(positions[i].x, positions[i].y, SNAKE_SCALE, SNAKE_SCALE, MAROON);
+    DrawRectangle(positions[i].x, positions[i].y, SNAKE_SCALE, SNAKE_SCALE,
+                  MAROON);
   }
 }
