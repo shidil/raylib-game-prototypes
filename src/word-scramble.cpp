@@ -10,8 +10,8 @@
 #include "utils/data-loader.hpp"
 
 #define WINDOW_TITLE "Word Game"
-#define SCREEN_WIDTH 364
-#define SCREEN_HEIGHT 640
+#define SCREEN_WIDTH 540
+#define SCREEN_HEIGHT 960
 #define DEFAULT_FPS 60
 #define GAME_SPEED 3
 #define GAME_DIFFICULTY 3
@@ -19,9 +19,9 @@
 #define GAME_OVER_INCORRECT_MESSAGE "Wrong answer!"
 #define GAME_OVER_SCORE_TEXT "Your score: "
 
-#define ANSWER_SIZE 32
-#define LETTER_SIZE 64
-#define REGULAR_SIZE 20
+#define ANSWER_SIZE 42
+#define LETTER_SIZE 80
+#define REGULAR_SIZE 28
 
 #define ALL_ALPHABETS "abcdefghijklmnopqrstuvwxyz"
 
@@ -185,14 +185,14 @@ GameLevel generate_level(bomaqs::word_dict word_dictionary, short difficulty) {
 
   vector<Letter> letters = generate_letters(word1, word2);
 
-  Button word1_button = {.title = word1,
-                         .bounds = (Rectangle){50, SCREEN_HEIGHT - 60,
-                                               (SCREEN_WIDTH / 2 - 50), 50},
-                         .color = get_random_color()};
+  Button word1_button = {
+      .title = word1,
+      .bounds = (Rectangle){0, SCREEN_HEIGHT - 120, (SCREEN_WIDTH / 2 - 15), 80},
+      .color = get_random_color()};
 
   Button word2_button = {
       word2,
-      (Rectangle){SCREEN_WIDTH / 2, SCREEN_HEIGHT - 60, SCREEN_WIDTH / 2, 50},
+      (Rectangle){SCREEN_WIDTH / 2, SCREEN_HEIGHT - 120, SCREEN_WIDTH / 2, 80},
       get_random_color()};
 
   auto answer_order = static_cast<LevelAnswer>(GetRandomValue(0, 2));
@@ -237,11 +237,23 @@ void draw_level(GameLevel level, Font letter_font, Font button_font) {
                letter.color);
   }
 
+  Rectangle bound_left = level.word1_button.bounds;
+  Rectangle bound_right = level.word2_button.bounds;
+
   // Correct answer is positioned randomly based on`button_order`
-  DrawTextRec(button_font, level.word1_button.title, level.word1_button.bounds,
-              ANSWER_SIZE, 12.0f, false, level.word1_button.color);
-  DrawTextRec(button_font, level.word2_button.title, level.word2_button.bounds,
-              ANSWER_SIZE, 12.0f, false, level.word2_button.color);
+  DrawTextRec(
+      button_font, level.word1_button.title,
+      (Rectangle){bound_left.x + 80, bound_left.y + bound_left.height / 4,
+                  bound_left.width, bound_left.height},
+      ANSWER_SIZE, 8.0f, false, level.word1_button.color);
+  DrawTextRec(
+      button_font, level.word2_button.title,
+      (Rectangle){bound_right.x + 80, bound_right.y + bound_right.height / 4,
+                  bound_right.width, bound_right.height},
+      ANSWER_SIZE, 8.0f, false, level.word2_button.color);
+
+  DrawRectangleLinesEx(bound_left, 1, LIGHTGRAY);
+  DrawRectangleLinesEx(bound_right, 1, LIGHTGRAY);
 }
 
 void draw_hud(GameLevel level, int score) {
@@ -271,8 +283,8 @@ void draw_game_over(int score, string message) {
   string scoreMessage = GAME_OVER_SCORE_TEXT;
 
   scoreMessage.append(to_string(score));
-  DrawText(message.data(), 140, 280, REGULAR_SIZE, MAROON);
-  DrawText(scoreMessage.data(), 100, 320, REGULAR_SIZE, ORANGE);
+  DrawText(message.data(), 200, 380, REGULAR_SIZE, MAROON);
+  DrawText(scoreMessage.data(), 180, 420, REGULAR_SIZE, ORANGE);
 }
 
 char* get_random_word(bomaqs::word_dict word_dictionary, short length) {
@@ -304,13 +316,13 @@ vector<Letter> generate_letters(string answer, string seed) {
   shuffle(shuffled_word.begin(), shuffled_word.end(), g);
 
   vector<Letter> letters = {};
-  int row = 100;
+  int row = 160;
   int per_column = GetRandomValue(2, 3);
   int column = 1;
   int count_letters = shuffled_word.length();
   for (int i = 0; i < count_letters; i++) {
     if (column == per_column) {
-      row += 100;
+      row += 160;
       column = 1;
       per_column = GetRandomValue(2, 3);
     } else if (i > 0) {
@@ -319,7 +331,7 @@ vector<Letter> generate_letters(string answer, string seed) {
 
     letters.push_back((Letter){
         .value = shuffled_word[i],
-        .x = (float)column * 80,
+        .x = (float)column * 120,
         .y = (float)row,
         .color = get_random_color(),
     });
