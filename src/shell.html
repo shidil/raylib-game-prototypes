@@ -7,43 +7,31 @@
     <title>Word Scrambler</title>
 
     <meta name="title" content="Word Scrambler" />
-    <meta
-      name="description"
-      content="New HTML5 videogame, developed using raylib videogames library"
-    />
-    <meta
-      name="keywords"
-      content="raylib, games, html5, programming, C, C++, library, learn, videogames"
-    />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="New HTML5 videogame, developed using raylib videogames library" />
+    <meta name="keywords" content="raylib, games, html5, programming, C, C++, library, learn, videogames" />
+    <!-- <meta name="viewport" content="width=device-width" /> -->
+    <meta name="viewport" content="width=device-width; initial-scale=1; viewport-fit=cover" />
+
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- possible content values: default, black or black-translucent -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     <!-- Open Graph metatags for sharing -->
     <meta property="og:title" content="Word Scrambler" />
     <meta property="og:image:type" content="image/png" />
-    <meta
-      property="og:image"
-      content="https://www.raylib.com/common/img/raylib_logo.png"
-    />
+    <meta property="og:image" content="https://www.raylib.com/common/img/raylib_logo.png" />
     <meta property="og:site_name" content="raylib.com" />
     <meta property="og:url" content="https://www.raylib.com/games.html" />
-    <meta
-      property="og:description"
-      content="New HTML5 videogame, developed using raylib videogames library"
-    />
+    <meta property="og:description" content="New HTML5 videogame, developed using raylib videogames library" />
 
     <!-- Twitter metatags for sharing -->
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@raysan5" />
     <meta name="twitter:title" content="Word Scrambler" />
-    <meta
-      name="twitter:image"
-      content="https://www.raylib.com/common/raylib_logo.png"
-    />
+    <meta name="twitter:image" content="https://www.raylib.com/common/raylib_logo.png" />
     <meta name="twitter:url" content="https://www.raylib.com/games.html" />
-    <meta
-      name="twitter:description"
-      content="New HTML5 videogame, developed using raylib videogames library"
-    />
+    <meta name="twitter:description" content="New HTML5 videogame, developed using raylib videogames library" />
 
     <link rel="manifest" href="manifest.json" />
     <!-- Favicon -->
@@ -211,12 +199,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
     </style>
   </head>
   <body>
-    <canvas
-      class="emscripten"
-      id="canvas"
-      oncontextmenu="event.preventDefault()"
-      tabindex="-1"
-    ></canvas>
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 
     <script
       type="text/javascript"
@@ -225,16 +208,12 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
     <script type="text/javascript">
       function saveFileFromMEMFSToDisk(memoryFSname, localFSname) {
         // This can be called by C/C++ code
-        var isSafari = /^((?!chrome|android).)*safari/i.test(
-          navigator.userAgent
-        );
+        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         var data = FS.readFile(memoryFSname);
         var blob;
 
-        if (isSafari)
-          blob = new Blob([data.buffer], { type: "application/octet-stream" });
-        else
-          blob = new Blob([data.buffer], { type: "application/octet-binary" });
+        if (isSafari) blob = new Blob([data.buffer], { type: "application/octet-stream" });
+        else blob = new Blob([data.buffer], { type: "application/octet-binary" });
 
         // NOTE: SaveAsDialog is a browser setting. For example, in Google Chrome,
         // in Settings/Advanced/Downloads section you have a setting:
@@ -251,8 +230,7 @@ jwE50AGjLCVuS8Yt4H7OgZLKK5EKOsLviEWJSL/+0uMi7gLUSBseYwqEbXvSHCec1CJvZPyHCmYQffaB
           return function (text) {};
         })(),
         printErr: function (text) {
-          if (arguments.length > 1)
-            text = Array.prototype.slice.call(arguments).join(" ");
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(" ");
 
           console.error(text);
         },
