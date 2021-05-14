@@ -26,7 +26,7 @@ achievement
 acid
 acknowledge
 acquire
-across 
+across
 act
 action
 active
@@ -65,7 +65,6 @@ affair
 affect
 afford
 afraid
-African
 after
 afternoon
 again
@@ -82,7 +81,6 @@ agricultural
 ahead
 aid
 aide
-AIDS
 aim
 air
 aircraft
@@ -105,7 +103,6 @@ alternative
 although
 always
 amazing
-American
 among
 amount
 analysis
@@ -149,7 +146,6 @@ appropriate
 approval
 approve
 approximately
-Arab
 architect
 area
 argue
@@ -168,7 +164,6 @@ art
 article
 artist
 artistic
-Asian
 aside
 ask
 asleep
@@ -221,7 +216,6 @@ badly
 bag
 bake
 balance
-ball
 ban
 band
 bank
@@ -273,7 +267,7 @@ bet
 better
 between
 beyond
-Bible
+bible
 big
 bike
 bill
@@ -333,7 +327,6 @@ briefly
 bright
 brilliant
 bring
-British
 broad
 broken
 brother
@@ -367,7 +360,6 @@ camp
 campaign
 campus
 can
-Canadian
 cancer
 candidate
 cap
@@ -392,7 +384,7 @@ cast
 cat
 catch
 category
-Catholic
+catholic
 cause
 ceiling
 celebrate
@@ -402,7 +394,6 @@ cell
 center
 central
 century
-CEO
 ceremony
 certain
 certainly
@@ -436,14 +427,12 @@ chicken
 chief
 child
 childhood
-Chinese
 chip
 chocolate
 choice
 cholesterol
 choose
-Christian
-Christmas
+christmas
 church
 cigarette
 circle
@@ -547,7 +536,7 @@ confirm
 conflict
 confront
 confusion
-Congress
+congress
 congressional
 connect
 connection
@@ -705,7 +694,7 @@ deliver
 delivery
 demand
 democracy
-Democrat
+democrat
 democratic
 demonstrate
 demonstration
@@ -759,7 +748,6 @@ direction
 directly
 director
 dirt
-dirty
 disability
 disagree
 disappear
@@ -790,7 +778,6 @@ diversity
 divide
 division
 divorce
-DNA
 doctor
 document
 dog
@@ -891,7 +878,7 @@ engage
 engine
 engineer
 engineering
-English
+english
 enhance
 enjoy
 enormous
@@ -924,7 +911,7 @@ estimate
 etc
 ethics
 ethnic
-European
+european
 evaluate
 evaluation
 even
@@ -1104,7 +1091,7 @@ framework
 free
 freedom
 freeze
-French
+french
 frequency
 frequent
 frequently
@@ -1141,7 +1128,6 @@ garlic
 gas
 gate
 gather
-gay
 gaze
 gear
 gender
@@ -1153,7 +1139,6 @@ generation
 genetic
 gentleman
 gently
-German
 gesture
 get
 ghost
@@ -1170,7 +1155,7 @@ glass
 global
 glove
 goal
-God
+god
 gold
 golden
 golf
@@ -1265,7 +1250,6 @@ historical
 history
 hit
 hold
-hole
 holiday
 holy
 home
@@ -1343,7 +1327,6 @@ indeed
 independence
 independent
 index
-Indian
 indicate
 indication
 individual
@@ -1388,7 +1371,7 @@ interested
 interesting
 internal
 international
-Internet
+internet
 interpret
 interpretation
 intervention
@@ -1407,23 +1390,15 @@ invite
 involve
 involved
 involvement
-Iraqi
-Irish
 iron
-Islamic
 island
-Israeli
 issue
-Italian
 item
 its
 itself
 jacket
 jail
-Japanese
 jet
-Jew
-Jewish
 job
 join
 joint
@@ -1445,7 +1420,6 @@ keep
 key
 kick
 kid
-kill
 killer
 killing
 kind
@@ -1473,7 +1447,7 @@ largely
 last
 late
 later
-Latin
+latin
 latter
 laugh
 launch
@@ -1628,7 +1602,6 @@ message
 metal
 meter
 method
-Mexican
 middle
 might
 military
@@ -1678,22 +1651,18 @@ mouth
 move
 movement
 movie
-Mrs
 much
 multiple
-murder
 muscle
 museum
 music
 musical
 musician
-Muslim
 must
 mutual
 myself
 mystery
 myth
-naked
 name
 narrative
 narrow
@@ -1783,7 +1752,7 @@ often
 oil
 okay
 old
-Olympic
+olympic
 once
 one
 ongoing
@@ -1842,7 +1811,6 @@ painter
 painting
 pair
 pale
-Palestinian
 palm
 pan
 panel
@@ -2186,7 +2154,6 @@ reporter
 represent
 representation
 representative
-Republican
 reputation
 request
 require
@@ -2254,7 +2221,6 @@ run
 running
 rural
 rush
-Russian
 sacred
 sad
 safe
@@ -2315,7 +2281,7 @@ select
 selection
 self
 sell
-Senate
+senate
 senator
 send
 senior
@@ -2337,8 +2303,6 @@ settlement
 seven
 several
 severe
-sex
-sexual
 shade
 shadow
 shake
@@ -2355,7 +2319,6 @@ shift
 shine
 ship
 shirt
-shit
 shock
 shoe
 shoot
@@ -2406,7 +2369,6 @@ ski
 skill
 skin
 sky
-slave
 sleep
 slice
 slide
@@ -2454,9 +2416,8 @@ soup
 source
 south
 southern
-Soviet
 space
-Spanish
+spanish
 speak
 speaker
 special
@@ -2525,7 +2486,6 @@ stress
 stretch
 strike
 string
-strip
 stroke
 strong
 strongly
@@ -2555,7 +2515,6 @@ sufficient
 sugar
 suggest
 suggestion
-suicide
 suit
 summer
 summit
@@ -2566,7 +2525,7 @@ support
 supporter
 suppose
 supposed
-Supreme
+supreme
 sure
 surely
 surface
@@ -2778,7 +2737,7 @@ uniform
 union
 unique
 unit
-United
+united
 universal
 universe
 university
