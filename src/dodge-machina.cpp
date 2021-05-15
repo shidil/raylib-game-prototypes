@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "utils/camera-2d.hpp"
 #include "utils/data-loader.hpp"
 
 int main() {
