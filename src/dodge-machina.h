@@ -78,12 +78,12 @@ Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity);
 
 GameWorld create_game_world();
 
-void draw_bullets(std::vector<Bullet> bullets, int count);
-int update_bullets(std::vector<Bullet> &bullets);
+void update_bullets(std::vector<Bullet> &bullets);
 Bullet create_bullet(Enemy enemy, Player player);
+void draw_bullets(std::vector<Bullet> bullets);
 
-void draw_enemies(std::vector<Enemy> enemies, int count);
 Enemy create_enemy(int current_count);
+void draw_enemies(std::vector<Enemy> enemies);
 
 bool check_bullet_collisions(Player player, std::vector<Bullet> bullets);
 std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemies);

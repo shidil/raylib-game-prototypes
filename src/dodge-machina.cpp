@@ -35,9 +35,6 @@ int main() {
     auto is_game_running = game_world.state == WorldState::RUNNING;
     auto is_game_over = game_world.state == WorldState::GAME_OVER;
 
-    int enemies_count = game_world.enemies.size();
-    int bullets_count = game_world.bullets.size();
-
     if (is_game_running) {
       frames_count += 1;
       score += 0.20f;
@@ -95,11 +92,11 @@ int main() {
 
     if (game_world.state == WorldState::RUNNING) {
       // spawn new enemy
+      int enemies_count = game_world.enemies.size();
       if (enemies_count < MAX_ENEMIES &&
           frames_count % (FRAME_RATE * (enemies_count ? 5 : 1)) == 0) {
-        auto new_enemy = create_enemy(enemies_count);
-        game_world.enemies.push_back(new_enemy);
-        enemies_count++;
+        game_world.enemies.push_back(create_enemy(enemies_count));
+        enemies_count += 1;
       }
 
       // update enemy, shoot, dash, follow
@@ -115,9 +112,8 @@ int main() {
           case EnemyType::SHOOTER:
             // enemy can shoot at set intervals (based on enemy.fire_rate)
             if (frames_count == 0 || frames_count % enemy->fire_rate == 0) {
-              if (bullets_count < MAX_BULLETS) {
+              if (game_world.bullets.size() < MAX_BULLETS) {
                 game_world.bullets.push_back(create_bullet(*enemy, game_world.player));
-                bullets_count += 1;
               }
               // TODO: set enemy state to RELOADING after x amount of bullets
               // fired
@@ -178,7 +174,7 @@ int main() {
 
     // Remove dead enemies
     std::vector<int> to_be_removed;
-    for (int i = 0; i < enemies_count; i++) {
+    for (int i = 0; i < game_world.enemies.size(); i++) {
       // TODO: remove enemy after a delay
       if (game_world.enemies[i].state == ActorState::DEAD) {
         to_be_removed.push_back(i);
@@ -186,11 +182,10 @@ int main() {
     }
     for (auto idx : to_be_removed) {
       game_world.enemies.erase(game_world.enemies.begin() + idx);
-      enemies_count -= 1;
     }
 
     // bullets update, remove out of bound bullets
-    bullets_count = update_bullets(game_world.bullets);
+    update_bullets(game_world.bullets);
 
     //---- Draw
     BeginDrawing();
@@ -200,8 +195,8 @@ int main() {
     // Draw game world
     DrawCircle(game_world.player.position.x, game_world.player.position.y, PLAYER_RADIUS,
                game_world.player.color);
-    draw_enemies(game_world.enemies, enemies_count);
-    draw_bullets(game_world.bullets, bullets_count);
+    draw_enemies(game_world.enemies);
+    draw_bullets(game_world.bullets);
     // debug dasher bounds
     DrawRectangleLinesEx(DASHER_BOUNDS, 2, LIGHTGRAY);
 
@@ -304,7 +299,7 @@ Enemy create_enemy(int current_count) {
   return enemy;
 }
 
-int update_bullets(std::vector<Bullet> &bullets) {
+void update_bullets(std::vector<Bullet> &bullets) {
   std::vector<int> to_be_erased;
   for (int i = 0; i < bullets.size(); i++) {
     if (!CheckCollisionPointRec(bullets[i].position, BULLET_BOUNDS)) {
@@ -317,8 +312,6 @@ int update_bullets(std::vector<Bullet> &bullets) {
   for (auto idx : to_be_erased) {
     bullets.erase(bullets.begin() + idx);
   }
-
-  return bullets.size();
 }
 
 bool check_bullet_collisions(Player player, std::vector<Bullet> bullets) {
@@ -377,14 +370,14 @@ std::vector<int> check_enemy_enemy_collisions(std::vector<Enemy> enemies) {
   return out;
 }
 
-void draw_bullets(std::vector<Bullet> bullets, int count) {
-  for (int i = 0; i < count; i++) {
+void draw_bullets(std::vector<Bullet> bullets) {
+  for (int i = 0; i < bullets.size(); i++) {
     DrawCircle(bullets[i].position.x, bullets[i].position.y, BULLET_RADIUS, BLACK);
   }
 }
 
-void draw_enemies(std::vector<Enemy> enemies, int count) {
-  for (int i = 0; i < count; i++) {
+void draw_enemies(std::vector<Enemy> enemies) {
+  for (int i = 0; i < enemies.size(); i++) {
     DrawRectangle(enemies[i].position.x, enemies[i].position.y, 20, 20, enemies[i].color);
   }
 }
