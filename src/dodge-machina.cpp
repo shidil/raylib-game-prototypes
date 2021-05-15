@@ -399,16 +399,3 @@ void draw_enemies(std::vector<Enemy> enemies, int count) {
                   enemies[i].color);
   }
 }
-
-// void draw(Vector2 player, Vector2 enemy) {
-//   BeginDrawing();
-//   ClearBackground(RAYWHITE);
-
-//   // Draw game world
-//   DrawCircle(player.x, player.y, PLAYER_RADIUS, RED);
-//   DrawRectangle(enemy.x, enemy.y, 20, 20, MAROON);
-//   DrawFPS(10, 10);
-
-//   EndMode2D();
-//   EndDrawing();
-// }
