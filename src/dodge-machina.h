@@ -82,5 +82,4 @@ Enemy create_enemy(int current_count);
 Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity);
 GameWorld create_game_world();
 bool check_bullet_collisions(Player player, std::vector<Bullet> bullets);
-std::vector<int> check_enemy_collisions(Player player,
-                                        std::vector<Enemy> enemies);
+std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemies);
