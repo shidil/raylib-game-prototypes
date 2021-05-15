@@ -20,3 +20,10 @@ Run a game using VSCode runner: Press f5 after opening game file.
 ```bash
 make PLATFORM=PLATFORM_ANDROID
 ```
+
+## Prototypes
+
+- [x] Snake
+- [x] Word scramble/Matching
+- [ ] Turn based snake
+- [ ] Radial/Planet gravity
