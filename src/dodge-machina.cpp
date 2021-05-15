@@ -6,14 +6,15 @@
 #include <vector>
 
 #include "utils/camera-2d.hpp"
+#include "utils/data-loader.hpp"
 
 #define SCREEN_WIDTH 540
 #define SCREEN_HEIGHT 960
 #define FRAME_RATE 60
 #define PLAYER_RADIUS 20
 #define BULLET_RADIUS 5
-#define BULLET_FIRE_RATE_MIN 8
-#define BULLET_FIRE_RATE_MAX 13
+#define BULLET_FIRE_RATE_MIN 12
+#define BULLET_FIRE_RATE_MAX 15
 #define MAX_BULLETS 100
 #define BULLET_VELOCITY 10
 #define MAX_ENEMIES 4
@@ -69,6 +70,14 @@ Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity);
 int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Dodge Machina");
   InitAudioDevice();
+
+  // load resources
+  Sound teleport_sfx = bomaqs::load_sound("teleport2.wav");
+  Music bgm_music = bomaqs::load_music("n-Dimensions (Main Theme).mp3");
+  bgm_music.looping = true;
+  SetMusicVolume(bgm_music, 0.35f);
+
+  PlayMusicStream(bgm_music);
   SetTargetFPS(60);
 
   unsigned long long int frames_count = 0;
@@ -81,6 +90,8 @@ int main() {
 
   while (!WindowShouldClose()) {
     // Update
+    UpdateMusicStream(bgm_music);
+
     if (player.state != DEAD) {
       frames_count += 1;
     }
@@ -111,6 +122,7 @@ int main() {
     if (player.state == LIVE && current_gesture == GESTURE_TAP) {
       auto touch_position = GetTouchPosition(0);
 
+      PlaySoundMulti(teleport_sfx);
       player.position.x = touch_position.x;
       player.position.y = touch_position.y;
     }
@@ -141,65 +153,67 @@ int main() {
       enemies.erase(enemies.begin() + idx);
     }
 
-    // spawn enemy
-    if (player.state != DEAD && enemies.size() < MAX_ENEMIES &&
-        frames_count % (FRAME_RATE * 4) == 0) {
-      enemies.push_back(create_enemy());
-    }
+    if (player.state != DEAD) {
+      // spawn enemy
+      if (enemies.size() < MAX_ENEMIES &&
+          frames_count % (FRAME_RATE * 4) == 0) {
+        enemies.push_back(create_enemy());
+      }
 
-    // update enemy
-    for (int i = 0; i < enemies.size(); i++) {
-      Enemy *enemy = &enemies[i];
+      // update enemy
+      for (int i = 0; i < enemies.size(); i++) {
+        Enemy *enemy = &enemies[i];
 
-      switch (enemy->type) {
-        case SHOOTER:
-          if (frames_count == 0 || frames_count % enemy->fire_rate == 0) {
-            if (bullets.size() < MAX_BULLETS) {
-              bullets.push_back(create_bullet(*enemy, player));
+        switch (enemy->type) {
+          case SHOOTER:
+            if (frames_count == 0 || frames_count % enemy->fire_rate == 0) {
+              if (bullets.size() < MAX_BULLETS) {
+                bullets.push_back(create_bullet(*enemy, player));
+              }
             }
+            break;
+          case DASHER: {
+            // skip enemy that is already dashing
+            if (enemy->velocity.x == 0 && enemy->velocity.y == 0) {
+              auto vel = get_homing_velocity(player.position, enemy->position,
+                                             DASHER_VELOCITY);
+              enemy->velocity.x = vel.x;
+              enemy->velocity.y = vel.y;
+            }
+
+            // check dasher bounds
+            // TODO: tweak bound rect, may be check enemy rect center point
+            // inside dasher bounds?
+            Rectangle enemy_rect = {
+                .x = enemy->position.x,
+                .y = enemy->position.y,
+                .width = 20,
+                .height = 20,
+            };
+
+            enemy->position.x += enemy->velocity.x;
+            enemy->position.y += enemy->velocity.y;
+
+            if (!CheckCollisionRecs(DASHER_BOUNDS, enemy_rect)) {
+              enemy->velocity.x = 0;
+              enemy->velocity.y = 0;
+            }
+
+            break;
           }
-          break;
-        case DASHER: {
-          // skip enemy that is already dashing
-          if (enemy->velocity.x == 0 && enemy->velocity.y == 0) {
+          case HOMING: {
             auto vel = get_homing_velocity(player.position, enemy->position,
-                                           DASHER_VELOCITY);
+                                           HOMING_VELOCITY);
             enemy->velocity.x = vel.x;
             enemy->velocity.y = vel.y;
+
+            enemy->position.x += enemy->velocity.x;
+            enemy->position.y += enemy->velocity.y;
+            break;
           }
-
-          // check dasher bounds
-          // TODO: tweak bound rect, may be check enemy rect center point inside
-          // dasher bounds?
-          Rectangle enemy_rect = {
-              .x = enemy->position.x,
-              .y = enemy->position.y,
-              .width = 20,
-              .height = 20,
-          };
-
-          enemy->position.x += enemy->velocity.x;
-          enemy->position.y += enemy->velocity.y;
-
-          if (!CheckCollisionRecs(DASHER_BOUNDS, enemy_rect)) {
-            enemy->velocity.x = 0;
-            enemy->velocity.y = 0;
-          }
-
-          break;
+          default:
+            break;
         }
-        case HOMING: {
-          auto vel = get_homing_velocity(player.position, enemy->position,
-                                         HOMING_VELOCITY);
-          enemy->velocity.x = vel.x;
-          enemy->velocity.y = vel.y;
-
-          enemy->position.x += enemy->velocity.x;
-          enemy->position.y += enemy->velocity.y;
-          break;
-        }
-        default:
-          break;
       }
     }
 
@@ -236,6 +250,8 @@ int main() {
 
   //---- De-Init
   StopSoundMulti();
+  UnloadMusicStream(bgm_music);
+  UnloadSound(teleport_sfx);
   CloseAudioDevice();
   CloseWindow();
 }
