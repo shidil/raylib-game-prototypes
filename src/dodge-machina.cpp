@@ -390,6 +390,10 @@ void draw_bullets(std::vector<Bullet> bullets) {
 
 void draw_enemies(std::vector<Enemy> enemies) {
   for (int i = 0; i < enemies.size(); i++) {
-    DrawRectangle(enemies[i].position.x, enemies[i].position.y, 20, 20, enemies[i].color);
+    Color color = enemies[i].color;
+    if (enemies[i].state == ActorState::RELOADING) {
+      color = GetRandomValue(0, 1) ? BLACK : color;
+    }
+    DrawRectangle(enemies[i].position.x, enemies[i].position.y, 20, 20, color);
   }
 }
