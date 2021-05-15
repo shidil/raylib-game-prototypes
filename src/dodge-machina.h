@@ -73,3 +73,14 @@ typedef struct {
   std::vector<Bullet> bullets;
   WorldState state;
 } GameWorld;
+
+void draw_bullets(std::vector<Bullet> bullets, int count);
+void draw_enemies(std::vector<Enemy> enemies, int count);
+int update_bullets(std::vector<Bullet> &bullets, int count);
+Bullet create_bullet(Enemy enemy, Player player);
+Enemy create_enemy(int current_count);
+Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity);
+GameWorld create_game_world();
+bool check_bullet_collisions(Player player, std::vector<Bullet> bullets);
+std::vector<int> check_enemy_collisions(Player player,
+                                        std::vector<Enemy> enemies);
