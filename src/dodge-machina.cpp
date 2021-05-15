@@ -60,8 +60,8 @@ int main() {
 
     // If player collides with bullet, game over for player
     if (check_bullet_collisions(game_world.player, game_world.bullets)) {
-      // game_world.player.state = ActorState::DEAD;
-      // game_world.state = WorldState::GAME_OVER;
+      game_world.player.state = ActorState::DEAD;
+      game_world.state = WorldState::GAME_OVER;
     }
 
     // Player collisions with enemies
@@ -73,8 +73,8 @@ int main() {
         if (game_world.enemies[idx].state == ActorState::RELOADING) {
           game_world.enemies[idx].state = ActorState::DEAD;
         } else {
-          // game_world.player.state = ActorState::DEAD;
-          // game_world.state = WorldState::GAME_OVER;
+          game_world.player.state = ActorState::DEAD;
+          game_world.state = WorldState::GAME_OVER;
         }
       }
     }
