@@ -60,8 +60,8 @@ int main() {
 
     // If player collides with bullet, game over for player
     if (check_bullet_collisions(game_world.player, game_world.bullets)) {
-      game_world.player.state = ActorState::DEAD;
-      game_world.state = WorldState::GAME_OVER;
+      // game_world.player.state = ActorState::DEAD;
+      // game_world.state = WorldState::GAME_OVER;
     }
 
     // Player collisions with enemies
@@ -73,8 +73,8 @@ int main() {
         if (game_world.enemies[idx].state == ActorState::RELOADING) {
           game_world.enemies[idx].state = ActorState::DEAD;
         } else {
-          game_world.player.state = ActorState::DEAD;
-          game_world.state = WorldState::GAME_OVER;
+          // game_world.player.state = ActorState::DEAD;
+          // game_world.state = WorldState::GAME_OVER;
         }
       }
     }
@@ -108,15 +108,31 @@ int main() {
           continue;
         }
 
+        if (enemy->reload_timer >= 0) {
+          enemy->reload_timer -= GetFrameTime();
+          if (enemy->reload_timer <= 0) {
+            enemy->state = ActorState::LIVE;
+          }
+        }
+
+        if (enemy->state == ActorState::RELOADING) {
+          continue;
+        }
+
         switch (enemy->type) {
-          case EnemyType::SHOOTER:
+          case EnemyType::SHOOTER: {
             // enemy can shoot at set intervals (based on enemy.fire_rate)
             if (frames_count == 0 || frames_count % enemy->fire_rate == 0) {
               if (game_world.bullets.size() < MAX_BULLETS) {
+                enemy->shots_fired += 1;
                 game_world.bullets.push_back(create_bullet(*enemy, game_world.player));
               }
-              // TODO: set enemy state to RELOADING after x amount of bullets
-              // fired
+              // Set enemy state to RELOADING after x amount of bullets
+              if (enemy->shots_fired >= enemy->shots_per_round) {
+                enemy->shots_fired = 0;
+                enemy->state = ActorState::RELOADING;
+                enemy->reload_timer = ENEMY_RELOAD_TIMER;
+              }
             }
 
             // Increase fire rate at set interval
@@ -124,16 +140,8 @@ int main() {
               enemy->fire_rate = std::max(enemy->fire_rate - 1, BULLET_FIRE_RATE_MAX);
             }
             break;
+          }
           case EnemyType::DASHER: {
-            // skip enemy that is already dashing
-            // TODO: Add a delay/reload time betwen dashes
-            if (enemy->velocity.x == 0 && enemy->velocity.y == 0) {
-              auto vel =
-                  get_homing_velocity(game_world.player.position, enemy->position, DASHER_VELOCITY);
-              enemy->velocity.x = vel.x;
-              enemy->velocity.y = vel.y;
-            }
-
             // TODO: tweak bound rect, may be check enemy rect center point
             // inside dasher bounds?
             Rectangle enemy_rect = {
@@ -143,16 +151,24 @@ int main() {
                 .height = 20,
             };
 
+            // skip enemy that is already dashing
+            if (enemy->velocity.x == 0 && enemy->velocity.y == 0) {
+              auto vel =
+                  get_homing_velocity(game_world.player.position, enemy->position, DASHER_VELOCITY);
+              enemy->velocity.x = vel.x;
+              enemy->velocity.y = vel.y;
+            }
+            // check dasher bounds, if inside continue to move, or stop moving
+            else if (!CheckCollisionRecs(DASHER_BOUNDS, enemy_rect)) {
+              enemy->velocity.x = 0;
+              enemy->velocity.y = 0;
+              enemy->state = ActorState::RELOADING;
+              enemy->reload_timer = ENEMY_RELOAD_TIMER;
+            }
+
             // Moves enemy with respect to it's velocity and direction
             enemy->position.x += enemy->velocity.x;
             enemy->position.y += enemy->velocity.y;
-
-            // check dasher bounds, if inside continue to move, or stop moving
-            if (!CheckCollisionRecs(DASHER_BOUNDS, enemy_rect)) {
-              enemy->velocity.x = 0;
-              enemy->velocity.y = 0;
-              // TODO: set enemy state to RELOADING
-            }
 
             break;
           }
@@ -173,19 +189,17 @@ int main() {
     }
 
     // Remove dead enemies
-    std::vector<int> to_be_removed;
-    for (int i = 0; i < game_world.enemies.size(); i++) {
+    std::vector<Enemy> updated_list;
+    for (auto enemy : game_world.enemies) {
       // TODO: remove enemy after a delay
-      if (game_world.enemies[i].state == ActorState::DEAD) {
-        to_be_removed.push_back(i);
+      if (enemy.state != ActorState::DEAD) {
+        updated_list.push_back(enemy);
       }
     }
-    for (auto idx : to_be_removed) {
-      game_world.enemies.erase(game_world.enemies.begin() + idx);
-    }
+    game_world.enemies = updated_list;
 
     // bullets update, remove out of bound bullets
-    update_bullets(game_world.bullets);
+    game_world.bullets = update_bullets(game_world.bullets);
 
     //---- Draw
     BeginDrawing();
@@ -299,19 +313,17 @@ Enemy create_enemy(int current_count) {
   return enemy;
 }
 
-void update_bullets(std::vector<Bullet> &bullets) {
-  std::vector<int> to_be_erased;
-  for (int i = 0; i < bullets.size(); i++) {
-    if (!CheckCollisionPointRec(bullets[i].position, BULLET_BOUNDS)) {
-      to_be_erased.push_back(i);
-    } else {
-      bullets[i].position.x += bullets[i].velocity.x;
-      bullets[i].position.y += bullets[i].velocity.y;
+std::vector<Bullet> update_bullets(std::vector<Bullet> &bullets) {
+  std::vector<Bullet> updated;
+  for (auto bullet : bullets) {
+    if (CheckCollisionPointRec(bullet.position, BULLET_BOUNDS)) {
+      bullet.position.x += bullet.velocity.x;
+      bullet.position.y += bullet.velocity.y;
+      updated.push_back(bullet);
     }
   }
-  for (auto idx : to_be_erased) {
-    bullets.erase(bullets.begin() + idx);
-  }
+
+  return updated;
 }
 
 bool check_bullet_collisions(Player player, std::vector<Bullet> bullets) {

@@ -10,13 +10,13 @@
 #define BULLET_FIRE_RATE_MIN 20
 #define BULLET_FIRE_RATE_MAX 8
 #define MAX_BULLETS 100
-#define RIFLE_SHOTS_PER_ROUND 40
+#define RIFLE_SHOTS_PER_ROUND 25
 #define BAZOOKA_SHOTS_PER_ROUND 1
 #define BULLET_VELOCITY 10
 #define MAX_ENEMIES 4
 #define DASHER_VELOCITY 8
 #define HOMING_VELOCITY 3
-#define ENEMY_RELOAD_TIMER 5
+#define ENEMY_RELOAD_TIMER 3
 #define DASHER_BOUNDS \
   CLITERAL(Rectangle) { 50, 50, SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100 }
 #define BULLET_BOUNDS \
@@ -78,7 +78,7 @@ Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity);
 
 GameWorld create_game_world();
 
-void update_bullets(std::vector<Bullet> &bullets);
+std::vector<Bullet> update_bullets(std::vector<Bullet> &bullets);
 Bullet create_bullet(Enemy enemy, Player player);
 void draw_bullets(std::vector<Bullet> bullets);
 
