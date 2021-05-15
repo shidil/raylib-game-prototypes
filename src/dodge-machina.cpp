@@ -31,17 +31,18 @@ int main() {
 
   // Main game loop runs FRAME_RATE times a second
   while (!WindowShouldClose()) {
-    // Update
     UpdateMusicStream(bgm_music);
 
-    if (game_world.state == WorldState::RUNNING) {
+    auto is_game_running = game_world.state == WorldState::RUNNING;
+    auto is_game_over = game_world.state == WorldState::GAME_OVER;
+
+    if (is_game_running) {
       frames_count += 1;
       score += 0.20f;
     }
 
     // Reset game on tap after game over screen shows
-    if (GetGestureDetected() == GESTURE_TAP &&
-        game_world.state == WorldState::GAME_OVER) {
+    if (GetGestureDetected() == GESTURE_TAP && is_game_over) {
       game_world = create_game_world();
       frames_count = 0;
       score = 0;
@@ -57,8 +58,7 @@ int main() {
     }
 
     // Player collisions with enemies
-    auto collided_enemies =
-        check_enemy_collisions(game_world.player, game_world.enemies);
+    auto collided_enemies = check_enemy_collisions(game_world.player, game_world.enemies);
 
     if (collided_enemies.size()) {
       for (auto idx : collided_enemies) {
@@ -128,8 +128,7 @@ int main() {
             // enemy can shoot at set intervals (based on enemy.fire_rate)
             if (frames_count == 0 || frames_count % enemy->fire_rate == 0) {
               if (bullets_count < MAX_BULLETS) {
-                game_world.bullets.push_back(
-                    create_bullet(*enemy, game_world.player));
+                game_world.bullets.push_back(create_bullet(*enemy, game_world.player));
                 bullets_count += 1;
               }
               // TODO: set enemy state to RELOADING after x amount of bullets
@@ -138,16 +137,15 @@ int main() {
 
             // Increase fire rate at set interval
             if (frames_count % FIRE_RATE_RAMPUP_INTERVAL == 0) {
-              enemy->fire_rate =
-                  std::max(enemy->fire_rate - 1, BULLET_FIRE_RATE_MAX);
+              enemy->fire_rate = std::max(enemy->fire_rate - 1, BULLET_FIRE_RATE_MAX);
             }
             break;
           case EnemyType::DASHER: {
             // skip enemy that is already dashing
             // TODO: Add a delay/reload time betwen dashes
             if (enemy->velocity.x == 0 && enemy->velocity.y == 0) {
-              auto vel = get_homing_velocity(game_world.player.position,
-                                             enemy->position, DASHER_VELOCITY);
+              auto vel =
+                  get_homing_velocity(game_world.player.position, enemy->position, DASHER_VELOCITY);
               enemy->velocity.x = vel.x;
               enemy->velocity.y = vel.y;
             }
@@ -175,8 +173,8 @@ int main() {
             break;
           }
           case EnemyType::HOMING: {
-            auto vel = get_homing_velocity(game_world.player.position,
-                                           enemy->position, HOMING_VELOCITY);
+            auto vel =
+                get_homing_velocity(game_world.player.position, enemy->position, HOMING_VELOCITY);
             enemy->velocity.x = vel.x;
             enemy->velocity.y = vel.y;
 
@@ -212,8 +210,8 @@ int main() {
     // DrawTexture(background, 0, 0, WHITE);
 
     // Draw game world
-    DrawCircle(game_world.player.position.x, game_world.player.position.y,
-               PLAYER_RADIUS, game_world.player.color);
+    DrawCircle(game_world.player.position.x, game_world.player.position.y, PLAYER_RADIUS,
+               game_world.player.color);
     draw_enemies(game_world.enemies, enemies_count);
     draw_bullets(game_world.bullets, bullets_count);
     // debug dasher bounds
@@ -221,8 +219,7 @@ int main() {
 
     // game over
     if (game_world.player.state == DEAD) {
-      DrawText("You Died!", (SCREEN_WIDTH / 2) - 100, (SCREEN_HEIGHT / 2) - 25,
-               40, BLACK);
+      DrawText("You Died!", (SCREEN_WIDTH / 2) - 100, (SCREEN_HEIGHT / 2) - 25, 40, BLACK);
     }
 
     DrawFPS(10, 10);
@@ -254,10 +251,9 @@ Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity) {
 }
 
 GameWorld create_game_world() {
-  Player player = {
-      .position = {.x = SCREEN_WIDTH / 2, .y = SCREEN_HEIGHT - 200},
-      .color = RED,
-      .state = ActorState::LIVE};
+  Player player = {.position = {.x = SCREEN_WIDTH / 2, .y = SCREEN_HEIGHT - 200},
+                   .color = RED,
+                   .state = ActorState::LIVE};
   std::vector<Bullet> bullets;
   std::vector<Enemy> enemies;
 
@@ -273,8 +269,7 @@ Bullet create_bullet(Enemy enemy, Player player) {
   Bullet bullet = {
       .position = enemy.position,
       .color = BLACK,
-      .velocity =
-          get_homing_velocity(player.position, enemy.position, BULLET_VELOCITY),
+      .velocity = get_homing_velocity(player.position, enemy.position, BULLET_VELOCITY),
   };
 
   return bullet;
@@ -341,8 +336,7 @@ int update_bullets(std::vector<Bullet> &bullets, int count) {
 
 bool check_bullet_collisions(Player player, std::vector<Bullet> bullets) {
   for (int i = 0; i < bullets.size(); i++) {
-    if (CheckCollisionCircles(player.position, PLAYER_RADIUS,
-                              bullets[i].position, BULLET_RADIUS)) {
+    if (CheckCollisionCircles(player.position, PLAYER_RADIUS, bullets[i].position, BULLET_RADIUS)) {
       return true;
     }
   }
@@ -350,8 +344,7 @@ bool check_bullet_collisions(Player player, std::vector<Bullet> bullets) {
   return false;
 }
 
-std::vector<int> check_enemy_collisions(Player player,
-                                        std::vector<Enemy> enemies) {
+std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemies) {
   std::vector<int> out;
   for (int i = 0; i < enemies.size(); i++) {
     Rectangle enemy_rect = {
@@ -370,14 +363,12 @@ std::vector<int> check_enemy_collisions(Player player,
 
 void draw_bullets(std::vector<Bullet> bullets, int count) {
   for (int i = 0; i < count; i++) {
-    DrawCircle(bullets[i].position.x, bullets[i].position.y, BULLET_RADIUS,
-               BLACK);
+    DrawCircle(bullets[i].position.x, bullets[i].position.y, BULLET_RADIUS, BLACK);
   }
 }
 
 void draw_enemies(std::vector<Enemy> enemies, int count) {
   for (int i = 0; i < count; i++) {
-    DrawRectangle(enemies[i].position.x, enemies[i].position.y, 20, 20,
-                  enemies[i].color);
+    DrawRectangle(enemies[i].position.x, enemies[i].position.y, 20, 20, enemies[i].color);
   }
 }
