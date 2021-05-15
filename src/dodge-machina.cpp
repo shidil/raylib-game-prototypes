@@ -25,6 +25,8 @@
 #define BULLET_BOUNDS \
   CLITERAL(Rectangle) { -50, -50, SCREEN_WIDTH + 100, SCREEN_HEIGHT + 100 }
 
+#define ENEMY_SELF_KILL_BONUS 50
+
 // void draw(Vector2 player, Vector2 enemy);
 
 enum EnemyType {
@@ -96,6 +98,7 @@ int main() {
   SetTargetFPS(60);
 
   unsigned long long int frames_count = 0;
+  float score = 0;
 
   GameWorld game_world = create_game_world();
 
@@ -105,12 +108,15 @@ int main() {
 
     if (game_world.state == WorldState::RUNNING) {
       frames_count += 1;
+      score += 0.20f;
     }
 
+    // Reset game on tap after game over screen shows
     if (GetGestureDetected() == GESTURE_TAP &&
         game_world.state == WorldState::GAME_OVER) {
       game_world = create_game_world();
       frames_count = 0;
+      score = 0;
     }
 
     int enemies_count = game_world.enemies.size();
@@ -151,7 +157,7 @@ int main() {
       game_world.player.position.y = touch_position.y;
     }
 
-    // Enemy collisions
+    // Enemy-enemy collisions
     std::set<int> to_be_removed;
     for (int i = 0; i < enemies_count; i++) {
       Rectangle enemy_rect_1 = {
@@ -167,9 +173,11 @@ int main() {
             .width = 20,
             .height = 20,
         };
+        // if enemy i and j collides, they both die, bonus score!!
         if (CheckCollisionRecs(enemy_rect_1, enemy_rect_2)) {
           to_be_removed.insert(i);
           to_be_removed.insert(j);
+          score += ENEMY_SELF_KILL_BONUS;
         }
       }
     }
@@ -270,7 +278,7 @@ int main() {
 
     DrawFPS(10, 10);
     std::string score_text = "Score: ";
-    score_text.append(std::to_string(frames_count / 5));
+    score_text.append(TextFormat("%02.00f", score));
     DrawText(score_text.data(), SCREEN_WIDTH - 120, 10, 20, ORANGE);
 
     EndMode2D();
