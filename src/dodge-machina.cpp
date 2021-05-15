@@ -35,6 +35,9 @@ int main() {
     auto is_game_running = game_world.state == WorldState::RUNNING;
     auto is_game_over = game_world.state == WorldState::GAME_OVER;
 
+    int enemies_count = game_world.enemies.size();
+    int bullets_count = game_world.bullets.size();
+
     if (is_game_running) {
       frames_count += 1;
       score += 0.20f;
@@ -47,8 +50,16 @@ int main() {
       score = 0;
     }
 
-    int enemies_count = game_world.enemies.size();
-    int bullets_count = game_world.bullets.size();
+    // Input handling
+    auto current_gesture = GetGestureDetected();
+    auto touch_position = GetTouchPosition(0);
+
+    // Tapping anywhere will teleport player to that position
+    if (game_world.player.state == LIVE && current_gesture == GESTURE_TAP) {
+      PlaySoundMulti(teleport_sfx);
+      game_world.player.position.x = touch_position.x;
+      game_world.player.position.y = touch_position.y;
+    }
 
     // If player collides with bullet, game over for player
     if (check_bullet_collisions(game_world.player, game_world.bullets)) {
@@ -70,37 +81,15 @@ int main() {
         }
       }
     }
-    // player input
-    auto current_gesture = GetGestureDetected();
-    if (game_world.player.state == LIVE && current_gesture == GESTURE_TAP) {
-      auto touch_position = GetTouchPosition(0);
 
-      PlaySoundMulti(teleport_sfx);
-      game_world.player.position.x = touch_position.x;
-      game_world.player.position.y = touch_position.y;
-    }
+    // Enemy-enemy collisions, both enemies die, player receives bonus score
+    collided_enemies = check_enemy_enemy_collisions(game_world.enemies);
 
-    // Enemy-enemy collisions
-    for (int i = 0; i < enemies_count; i++) {
-      Rectangle enemy_rect_1 = {
-          .x = game_world.enemies[i].position.x,
-          .y = game_world.enemies[i].position.y,
-          .width = 20,
-          .height = 20,
-      };
-      for (int j = i + 1; j < enemies_count; j++) {
-        Rectangle enemy_rect_2 = {
-            .x = game_world.enemies[j].position.x,
-            .y = game_world.enemies[j].position.y,
-            .width = 20,
-            .height = 20,
-        };
-        // if enemy i and j collides, they both die, bonus score!!
-        if (CheckCollisionRecs(enemy_rect_1, enemy_rect_2)) {
-          game_world.enemies[i].state = ActorState::DEAD;
-          game_world.enemies[j].state = ActorState::DEAD;
-          score += ENEMY_SELF_KILL_BONUS;
-        }
+    if (collided_enemies.size()) {
+      for (auto idx : collided_enemies) {
+        game_world.enemies[idx].state = ActorState::DEAD;
+        score += ENEMY_SELF_KILL_BONUS;
+        // TODO: PlaySound(bonus_score_sfx);
       }
     }
 
@@ -200,8 +189,8 @@ int main() {
       enemies_count -= 1;
     }
 
-    // bullets
-    bullets_count = update_bullets(game_world.bullets, bullets_count);
+    // bullets update, remove out of bound bullets
+    bullets_count = update_bullets(game_world.bullets);
 
     //---- Draw
     BeginDrawing();
@@ -315,10 +304,9 @@ Enemy create_enemy(int current_count) {
   return enemy;
 }
 
-int update_bullets(std::vector<Bullet> &bullets, int count) {
-  // TODO: bullets that go out of screen bounds needs to removed
+int update_bullets(std::vector<Bullet> &bullets) {
   std::vector<int> to_be_erased;
-  for (int i = 0; i < count; i++) {
+  for (int i = 0; i < bullets.size(); i++) {
     if (!CheckCollisionPointRec(bullets[i].position, BULLET_BOUNDS)) {
       to_be_erased.push_back(i);
     } else {
@@ -330,7 +318,7 @@ int update_bullets(std::vector<Bullet> &bullets, int count) {
     bullets.erase(bullets.begin() + idx);
   }
 
-  return count - to_be_erased.size();
+  return bullets.size();
 }
 
 bool check_bullet_collisions(Player player, std::vector<Bullet> bullets) {
@@ -354,6 +342,35 @@ std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemie
     };
     if (CheckCollisionCircleRec(player.position, PLAYER_RADIUS, enemy_rect)) {
       out.push_back(i);
+    }
+  }
+
+  return out;
+}
+
+std::vector<int> check_enemy_enemy_collisions(std::vector<Enemy> enemies) {
+  std::vector<int> out;
+  int enemies_count = enemies.size();
+
+  for (int i = 0; i < enemies_count; i++) {
+    Rectangle enemy_rect_1 = {
+        .x = enemies[i].position.x,
+        .y = enemies[i].position.y,
+        .width = 20,
+        .height = 20,
+    };
+    for (int j = i + 1; j < enemies_count; j++) {
+      Rectangle enemy_rect_2 = {
+          .x = enemies[j].position.x,
+          .y = enemies[j].position.y,
+          .width = 20,
+          .height = 20,
+      };
+      // if enemy i and j collides, they both die, bonus score!!
+      if (CheckCollisionRecs(enemy_rect_1, enemy_rect_2)) {
+        out.push_back(i);
+        out.push_back(j);
+      }
     }
   }
 
