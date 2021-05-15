@@ -64,7 +64,7 @@ void draw_bullets(std::vector<Bullet> bullets);
 void draw_enemies(std::vector<Enemy> enemies);
 void update_bullets(std::vector<Bullet> &bullets);
 Bullet create_bullet(Enemy enemy, Player player);
-Enemy create_enemy(void);
+Enemy create_enemy(int current_count);
 Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity);
 
 int main() {
@@ -82,9 +82,10 @@ int main() {
 
   unsigned long long int frames_count = 0;
 
-  Player player = {.position = {.x = SCREEN_WIDTH / 2, .y = SCREEN_HEIGHT / 2},
-                   .color = RED,
-                   .state = LIVE};
+  Player player = {
+      .position = {.x = SCREEN_WIDTH / 2, .y = SCREEN_HEIGHT - 200},
+      .color = RED,
+      .state = LIVE};
   std::vector<Bullet> bullets;
   std::vector<Enemy> enemies;
 
@@ -156,8 +157,8 @@ int main() {
     if (player.state != DEAD) {
       // spawn enemy
       if (enemies.size() < MAX_ENEMIES &&
-          frames_count % (FRAME_RATE * 4) == 0) {
-        enemies.push_back(create_enemy());
+          frames_count % (FRAME_RATE * (enemies.size() ? 5 : 1)) == 0) {
+        enemies.push_back(create_enemy(enemies.size()));
       }
 
       // update enemy
@@ -278,20 +279,31 @@ Bullet create_bullet(Enemy enemy, Player player) {
 
 Color enemy_colors[3] = {DARKGREEN, BLUE, VIOLET};
 
-Enemy create_enemy() {
+Enemy create_enemy(int current_count) {
   // Avoid overlapping enemy and player, as well as other enemies
   // Keep min x distance from other enemies and player
   // Some randonmess in fire rate and other timings
   // Enemy spawn probability
-  float x = GetRandomValue(50, SCREEN_WIDTH - 50);
-  float y = GetRandomValue(50, SCREEN_HEIGHT - 50);
+  float x, y;
+  EnemyType type;
+  if (current_count == 0) {
+    // First enemy is fixed
+    x = (SCREEN_WIDTH / 2) + GetRandomValue(-100, 100);
+    y = 100 + GetRandomValue(-25, 25);
+    type = SHOOTER;
+  } else {
+    x = GetRandomValue(50, SCREEN_WIDTH - 50);
+    y = GetRandomValue(50, SCREEN_HEIGHT - 50);
+    type = static_cast<EnemyType>(GetRandomValue(0, 0));
+  }
 
   Enemy enemy = {
       .position = {x, y},
       .color = enemy_colors[GetRandomValue(0, 2)],
       .velocity = {0, 0},
       .fire_rate = GetRandomValue(BULLET_FIRE_RATE_MIN, BULLET_FIRE_RATE_MAX),
-      .type = static_cast<EnemyType>(GetRandomValue(0, 0))};
+      .type = type,
+  };
   return enemy;
 }
 
