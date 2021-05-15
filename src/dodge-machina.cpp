@@ -16,6 +16,8 @@
 #define BULLET_FIRE_RATE_MIN 20
 #define BULLET_FIRE_RATE_MAX 20
 #define MAX_BULLETS 100
+#define RIFLE_SHOTS_PER_ROUND 40
+#define BAZOOKA_SHOTS_PER_ROUND 1
 #define BULLET_VELOCITY 10
 #define MAX_ENEMIES 4
 #define DASHER_VELOCITY 8
@@ -37,7 +39,6 @@ enum EnemyType {
 
 enum ActorState {
   LIVE,
-  DASHING,
   DEAD,
   RELOADING,
 };
@@ -58,10 +59,11 @@ typedef struct {
   Vector2 position;
   Color color;
   Vector2 velocity;
-  int fire_rate;
   EnemyType type;
-  // int bullets_fired;
   ActorState state;
+  int fire_rate;
+  int shots_fired;
+  int shots_per_round;
 } Enemy;
 
 typedef struct {
@@ -382,9 +384,11 @@ Enemy create_enemy(int current_count) {
       .position = {x, y},
       .color = enemy_colors[GetRandomValue(0, 2)],
       .velocity = {0, 0},
-      .fire_rate = GetRandomValue(BULLET_FIRE_RATE_MIN, BULLET_FIRE_RATE_MAX),
       .type = type,
       .state = ActorState::LIVE,
+      .fire_rate = GetRandomValue(BULLET_FIRE_RATE_MIN, BULLET_FIRE_RATE_MAX),
+      .shots_fired = 0,
+      .shots_per_round = RIFLE_SHOTS_PER_ROUND,
   };
   return enemy;
 }
