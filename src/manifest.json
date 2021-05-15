@@ -1,0 +1,8 @@
+{
+  "name": "{{title}}",
+  "theme_color": "#2196f3",
+  "background_color": "#2196f3",
+  "display": "fullscreen",
+  "scope": "/{{game}}",
+  "start_url": "/{{game}}"
+}
