@@ -219,7 +219,8 @@ int main() {
 
             // Increase fire rate at set interval
             if (frames_count % FIRE_RATE_RAMPUP_INTERVAL == 0) {
-              enemy->fire_rate = std::max(enemy->fire_rate - 1, BULLET_FIRE_RATE_MAX);
+              enemy->fire_rate =
+                  std::max(enemy->fire_rate - 1, BULLET_FIRE_RATE_MAX);
             }
             break;
           case EnemyType::DASHER: {
