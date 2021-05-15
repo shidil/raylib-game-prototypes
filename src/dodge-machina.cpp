@@ -13,8 +13,8 @@
 #define FRAME_RATE 60
 #define PLAYER_RADIUS 20
 #define BULLET_RADIUS 5
-#define BULLET_FIRE_RATE_MIN 12
-#define BULLET_FIRE_RATE_MAX 15
+#define BULLET_FIRE_RATE_MIN 20
+#define BULLET_FIRE_RATE_MAX 20
 #define MAX_BULLETS 100
 #define BULLET_VELOCITY 10
 #define MAX_ENEMIES 4
@@ -39,6 +39,12 @@ enum ActorState {
   DEAD,
 };
 
+enum WorldState {
+  RUNNING,
+  PAUSED,
+  GAME_OVER,
+};
+
 typedef struct {
   Vector2 position;
   Color color;
@@ -60,18 +66,27 @@ typedef struct {
   ActorState state;
 } Player;
 
-void draw_bullets(std::vector<Bullet> bullets);
-void draw_enemies(std::vector<Enemy> enemies);
-void update_bullets(std::vector<Bullet> &bullets);
+typedef struct {
+  Player player;
+  std::vector<Enemy> enemies;
+  std::vector<Bullet> bullets;
+  WorldState state;
+} GameWorld;
+
+void draw_bullets(std::vector<Bullet> bullets, int count);
+void draw_enemies(std::vector<Enemy> enemies, int count);
+int update_bullets(std::vector<Bullet> &bullets, int count);
 Bullet create_bullet(Enemy enemy, Player player);
 Enemy create_enemy(int current_count);
 Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity);
+GameWorld create_game_world();
 
 int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Dodge Machina");
   InitAudioDevice();
 
   // load resources
+  Texture2D background = bomaqs::load_texture("bg-grid.png");
   Sound teleport_sfx = bomaqs::load_sound("teleport2.wav");
   Music bgm_music = bomaqs::load_music("n-Dimensions (Main Theme).mp3");
   bgm_music.looping = true;
@@ -82,65 +97,73 @@ int main() {
 
   unsigned long long int frames_count = 0;
 
-  Player player = {
-      .position = {.x = SCREEN_WIDTH / 2, .y = SCREEN_HEIGHT - 200},
-      .color = RED,
-      .state = LIVE};
-  std::vector<Bullet> bullets;
-  std::vector<Enemy> enemies;
+  GameWorld game_world = create_game_world();
 
   while (!WindowShouldClose()) {
     // Update
     UpdateMusicStream(bgm_music);
 
-    if (player.state != DEAD) {
+    if (game_world.state == WorldState::RUNNING) {
       frames_count += 1;
     }
 
+    if (GetGestureDetected() == GESTURE_TAP &&
+        game_world.state == WorldState::GAME_OVER) {
+      game_world = create_game_world();
+      frames_count = 0;
+    }
+
+    int enemies_count = game_world.enemies.size();
+    int bullets_count = game_world.bullets.size();
+
     // Player collisions with bullets
-    for (int i = 0; i < bullets.size(); i++) {
-      if (CheckCollisionCircles(player.position, PLAYER_RADIUS,
-                                bullets[i].position, BULLET_RADIUS)) {
-        player.state = DEAD;
+    for (int i = 0; i < bullets_count; i++) {
+      if (CheckCollisionCircles(game_world.player.position, PLAYER_RADIUS,
+                                game_world.bullets[i].position,
+                                BULLET_RADIUS)) {
+        game_world.player.state = ActorState::DEAD;
+        game_world.state = WorldState::GAME_OVER;
       }
     }
 
     // Player collisions with enemies
-    for (int i = 0; i < enemies.size(); i++) {
+    for (int i = 0; i < enemies_count; i++) {
       Rectangle enemy_rect = {
-          .x = enemies[i].position.x,
-          .y = enemies[i].position.y,
+          .x = game_world.enemies[i].position.x,
+          .y = game_world.enemies[i].position.y,
           .width = 20,
           .height = 20,
       };
-      if (CheckCollisionCircleRec(player.position, PLAYER_RADIUS, enemy_rect)) {
-        player.state = DEAD;
+      if (CheckCollisionCircleRec(game_world.player.position, PLAYER_RADIUS,
+                                  enemy_rect)) {
+        game_world.player.state = ActorState::DEAD;
+        game_world.state = WorldState::GAME_OVER;
       }
     }
 
     // player input
     auto current_gesture = GetGestureDetected();
-    if (player.state == LIVE && current_gesture == GESTURE_TAP) {
+    if (game_world.player.state == LIVE && current_gesture == GESTURE_TAP) {
       auto touch_position = GetTouchPosition(0);
 
       PlaySoundMulti(teleport_sfx);
-      player.position.x = touch_position.x;
-      player.position.y = touch_position.y;
+      game_world.player.position.x = touch_position.x;
+      game_world.player.position.y = touch_position.y;
     }
 
     // Enemy collisions
     std::set<int> to_be_removed;
-    for (int i = 0; i < enemies.size(); i++) {
+    for (int i = 0; i < enemies_count; i++) {
       Rectangle enemy_rect_1 = {
-          .x = enemies[i].position.x,
-          .y = enemies[i].position.y,
+          .x = game_world.enemies[i].position.x,
+          .y = game_world.enemies[i].position.y,
           .width = 20,
           .height = 20,
       };
-      for (int j = 1; j < enemies.size(); j++) {
+      for (int j = i + 1; j < enemies_count; j++) {
         Rectangle enemy_rect_2 = {
-            .x = enemies[j].position.x,
-            .y = enemies[j].position.y,
+            .x = game_world.enemies[j].position.x,
+            .y = game_world.enemies[j].position.y,
             .width = 20,
             .height = 20,
         };
@@ -151,33 +174,38 @@ int main() {
       }
     }
     for (auto idx : to_be_removed) {
-      enemies.erase(enemies.begin() + idx);
+      game_world.enemies.erase(game_world.enemies.begin() + idx);
+      enemies_count -= 1;
     }
 
-    if (player.state != DEAD) {
+    if (game_world.state == WorldState::RUNNING) {
       // spawn enemy
-      if (enemies.size() < MAX_ENEMIES &&
-          frames_count % (FRAME_RATE * (enemies.size() ? 5 : 1)) == 0) {
-        enemies.push_back(create_enemy(enemies.size()));
+      if (enemies_count < MAX_ENEMIES &&
+          frames_count % (FRAME_RATE * (enemies_count ? 5 : 1)) == 0) {
+        auto new_enemy = create_enemy(enemies_count);
+        game_world.enemies.push_back(new_enemy);
+        enemies_count++;
       }
 
       // update enemy
-      for (int i = 0; i < enemies.size(); i++) {
-        Enemy *enemy = &enemies[i];
+      for (int i = 0; i < enemies_count; i++) {
+        Enemy *enemy = &game_world.enemies[i];
 
         switch (enemy->type) {
-          case SHOOTER:
+          case EnemyType::SHOOTER:
             if (frames_count == 0 || frames_count % enemy->fire_rate == 0) {
-              if (bullets.size() < MAX_BULLETS) {
-                bullets.push_back(create_bullet(*enemy, player));
+              if (bullets_count < MAX_BULLETS) {
+                game_world.bullets.push_back(
+                    create_bullet(*enemy, game_world.player));
+                bullets_count += 1;
               }
             }
             break;
-          case DASHER: {
+          case EnemyType::DASHER: {
             // skip enemy that is already dashing
             if (enemy->velocity.x == 0 && enemy->velocity.y == 0) {
-              auto vel = get_homing_velocity(player.position, enemy->position,
-                                             DASHER_VELOCITY);
+              auto vel = get_homing_velocity(game_world.player.position,
+                                             enemy->position, DASHER_VELOCITY);
               enemy->velocity.x = vel.x;
               enemy->velocity.y = vel.y;
             }
@@ -202,9 +230,9 @@ int main() {
 
             break;
           }
-          case HOMING: {
-            auto vel = get_homing_velocity(player.position, enemy->position,
-                                           HOMING_VELOCITY);
+          case EnemyType::HOMING: {
+            auto vel = get_homing_velocity(game_world.player.position,
+                                           enemy->position, HOMING_VELOCITY);
             enemy->velocity.x = vel.x;
             enemy->velocity.y = vel.y;
 
@@ -219,22 +247,23 @@ int main() {
     }
 
     // bullets
-    update_bullets(bullets);
+    bullets_count = update_bullets(game_world.bullets, bullets_count);
 
     //---- Draw
     BeginDrawing();
     ClearBackground(RAYWHITE);
+    // DrawTexture(background, 0, 0, WHITE);
 
     // Draw game world
-    DrawCircle(player.position.x, player.position.y, PLAYER_RADIUS,
-               player.color);
-    draw_enemies(enemies);
-    draw_bullets(bullets);
+    DrawCircle(game_world.player.position.x, game_world.player.position.y,
+               PLAYER_RADIUS, game_world.player.color);
+    draw_enemies(game_world.enemies, enemies_count);
+    draw_bullets(game_world.bullets, bullets_count);
     // debug dasher bounds
     DrawRectangleLinesEx(DASHER_BOUNDS, 2, LIGHTGRAY);
 
     // game over
-    if (player.state == DEAD) {
+    if (game_world.player.state == DEAD) {
       DrawText("You Died!", (SCREEN_WIDTH / 2) - 100, (SCREEN_HEIGHT / 2) - 25,
                40, BLACK);
     }
@@ -253,6 +282,7 @@ int main() {
   StopSoundMulti();
   UnloadMusicStream(bgm_music);
   UnloadSound(teleport_sfx);
+  UnloadTexture(background);
   CloseAudioDevice();
   CloseWindow();
 }
@@ -264,6 +294,22 @@ float coordinate_angle(Vector2 pos1, Vector2 pos2) {
 Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity) {
   auto angle = coordinate_angle(pos1, pos2);
   return {(float)cos(angle) * velocity, (float)sin(angle) * velocity};
+}
+
+GameWorld create_game_world() {
+  Player player = {
+      .position = {.x = SCREEN_WIDTH / 2, .y = SCREEN_HEIGHT - 200},
+      .color = RED,
+      .state = ActorState::LIVE};
+  std::vector<Bullet> bullets;
+  std::vector<Enemy> enemies;
+
+  return {
+      .player = player,
+      .enemies = enemies,
+      .bullets = bullets,
+      .state = WorldState::RUNNING,
+  };
 }
 
 Bullet create_bullet(Enemy enemy, Player player) {
@@ -290,11 +336,18 @@ Enemy create_enemy(int current_count) {
     // First enemy is fixed
     x = (SCREEN_WIDTH / 2) + GetRandomValue(-100, 100);
     y = 100 + GetRandomValue(-25, 25);
-    type = SHOOTER;
+    type = EnemyType::SHOOTER;
   } else {
-    x = GetRandomValue(50, SCREEN_WIDTH - 50);
-    y = GetRandomValue(50, SCREEN_HEIGHT - 50);
-    type = static_cast<EnemyType>(GetRandomValue(0, 0));
+    type = static_cast<EnemyType>(GetRandomValue(0, 2));
+
+    // Spawn close to corners
+    if (type == EnemyType::SHOOTER) {
+      x = GetRandomValue(50, SCREEN_WIDTH - 50);
+      y = GetRandomValue(50, SCREEN_HEIGHT - 50);
+    } else {
+      x = GetRandomValue(50, SCREEN_WIDTH - 50);
+      y = GetRandomValue(50, SCREEN_HEIGHT - 50);
+    }
   }
 
   Enemy enemy = {
@@ -307,27 +360,33 @@ Enemy create_enemy(int current_count) {
   return enemy;
 }
 
-void update_bullets(std::vector<Bullet> &bullets) {
+int update_bullets(std::vector<Bullet> &bullets, int count) {
   // TODO: bullets that go out of screen bounds needs to removed
-  for (int i = 0; i < bullets.size(); i++) {
+  std::vector<int> to_be_erased;
+  for (int i = 0; i < count; i++) {
     if (!CheckCollisionPointRec(bullets[i].position, BULLET_BOUNDS)) {
-      bullets.erase(bullets.begin() + i);
+      to_be_erased.push_back(i);
     } else {
       bullets[i].position.x += bullets[i].velocity.x;
       bullets[i].position.y += bullets[i].velocity.y;
     }
   }
+  for (auto idx : to_be_erased) {
+    bullets.erase(bullets.begin() + idx);
+  }
+
+  return count - to_be_erased.size();
 }
 
-void draw_bullets(std::vector<Bullet> bullets) {
-  for (int i = 0; i < bullets.size(); i++) {
+void draw_bullets(std::vector<Bullet> bullets, int count) {
+  for (int i = 0; i < count; i++) {
     DrawCircle(bullets[i].position.x, bullets[i].position.y, BULLET_RADIUS,
                BLACK);
   }
 }
 
-void draw_enemies(std::vector<Enemy> enemies) {
-  for (int i = 0; i < enemies.size(); i++) {
+void draw_enemies(std::vector<Enemy> enemies, int count) {
+  for (int i = 0; i < count; i++) {
     DrawRectangle(enemies[i].position.x, enemies[i].position.y, 20, 20,
                   enemies[i].color);
   }
