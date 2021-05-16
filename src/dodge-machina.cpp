@@ -273,6 +273,8 @@ Bullet create_bullet(Enemy enemy, Player player) {
 }
 
 Color enemy_colors[3] = {DARKGREEN, BLUE, VIOLET};
+EnemyType enemy_order[MAX_ENEMIES] = {EnemyType::SHOOTER, EnemyType::DASHER, EnemyType::HOMING,
+                                      EnemyType::DASHER};
 
 Enemy create_enemy(int current_count) {
   // Avoid overlapping enemy and player, as well as other enemies
@@ -280,18 +282,19 @@ Enemy create_enemy(int current_count) {
   // Some randonmess in fire rate and other timings
   // Enemy spawn probability
   float x, y;
-  EnemyType type;
+  EnemyType type = enemy_order[current_count % MAX_ENEMIES];
   if (current_count == 0) {
     // First enemy is fixed
     x = (SCREEN_WIDTH / 2) + GetRandomValue(-100, 100);
     y = 100 + GetRandomValue(-25, 25);
-    type = EnemyType::SHOOTER;
+    // type = EnemyType::SHOOTER;
   } else {
-    type = static_cast<EnemyType>(GetRandomValue(0, 2));
+    // type = static_cast<EnemyType>(GetRandomValue(0, 2));
 
-    // Spawn close to corners
-    if (type == EnemyType::SHOOTER) {
-      x = GetRandomValue(50, SCREEN_WIDTH - 50);
+    // Spawn shooters close to edges
+    if (type == EnemyType::SHOOTER || type == EnemyType::DASHER) {
+      auto left_align = GetRandomValue(0, 1);
+      x = left_align ? 50 : SCREEN_WIDTH - 50;
       y = GetRandomValue(50, SCREEN_HEIGHT - 50);
     } else {
       x = GetRandomValue(50, SCREEN_WIDTH - 50);
