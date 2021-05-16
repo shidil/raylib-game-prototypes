@@ -58,7 +58,7 @@ int main() {
       game_world.player.position.y = touch_position.y;
     }
 
-    // If player collides with bullet, game over for player
+    // If player collides with bullet, shield loss for player
     if (check_bullet_collisions(game_world.player, game_world.bullets)) {
       game_world.player.shield -= 1;
     }
