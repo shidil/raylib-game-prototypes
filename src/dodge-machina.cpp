@@ -1,4 +1,4 @@
-#include "dodge-machina.h"
+#include "dodge-machina.hpp"
 
 #include <raylib.h>
 #include <raymath.h>
