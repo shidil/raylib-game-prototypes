@@ -207,20 +207,20 @@ int main() {
 
     //---- Draw
     BeginDrawing();
-    ClearBackground(RAYWHITE);
-    // DrawTexture(background, 0, 0, WHITE);
+    ClearBackground(BLACK);
+    DrawTexture(background, 0, 0, (Color){15, 15, 15, 255});
 
     // Draw game world
-    DrawCircle(game_world.player.position.x, game_world.player.position.y, PLAYER_RADIUS,
-               game_world.player.color);
+    DrawCircleLines(game_world.player.position.x, game_world.player.position.y, PLAYER_RADIUS,
+                    game_world.player.color);
     draw_enemies(game_world.enemies);
     draw_bullets(game_world.bullets);
     // debug dasher bounds
-    DrawRectangleLinesEx(DASHER_BOUNDS, 2, LIGHTGRAY);
+    DrawRectangleLinesEx(DASHER_BOUNDS, 2, GREEN);
 
     // game over
     if (game_world.player.state == DEAD) {
-      DrawText("You Died!", (SCREEN_WIDTH / 2) - 100, (SCREEN_HEIGHT / 2) - 25, 40, BLACK);
+      DrawText("You Died!", (SCREEN_WIDTH / 2) - 100, (SCREEN_HEIGHT / 2) - 25, 40, YELLOW);
     }
 
     DrawFPS(10, 10);
@@ -396,7 +396,7 @@ std::vector<int> check_enemy_enemy_collisions(std::vector<Enemy> enemies) {
 
 void draw_bullets(std::vector<Bullet> bullets) {
   for (int i = 0; i < bullets.size(); i++) {
-    DrawCircle(bullets[i].position.x, bullets[i].position.y, BULLET_RADIUS, BLACK);
+    DrawCircle(bullets[i].position.x, bullets[i].position.y, BULLET_RADIUS, YELLOW);
   }
 }
 
@@ -404,8 +404,8 @@ void draw_enemies(std::vector<Enemy> enemies) {
   for (int i = 0; i < enemies.size(); i++) {
     Color color = enemies[i].color;
     if (enemies[i].state == ActorState::RELOADING) {
-      color = GetRandomValue(0, 1) ? BLACK : color;
+      color = GetRandomValue(0, 1) ? RED : color;
     }
-    DrawRectangle(enemies[i].position.x, enemies[i].position.y, 20, 20, color);
+    DrawRectangleLines(enemies[i].position.x, enemies[i].position.y, 20, 20, color);
   }
 }
