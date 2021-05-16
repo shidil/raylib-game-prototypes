@@ -13,23 +13,23 @@
 #define ENEMY_SELF_KILL_BONUS 100
 
 #define BULLET_RADIUS 3
-#define BULLET_FIRE_RATE_MIN 25
-#define BULLET_FIRE_RATE_MAX 15
+#define BULLET_FIRE_RATE_MIN 20
+#define BULLET_FIRE_RATE_MAX 10
 #define MAX_BULLETS 100
 #define RIFLE_SHOTS_PER_ROUND 25
 #define BAZOOKA_SHOTS_PER_ROUND 1
-#define BULLET_VELOCITY 10
+#define BULLET_VELOCITY 5
 #define FIRE_RATE_RAMPUP_INTERVAL 300
 
 #define MAX_ENEMIES 4
 #define MAX_ENEMY_TRAIL 10
 
 #define DASHER_VELOCITY 8
-#define HOMING_VELOCITY 3
+#define HOMING_VELOCITY 2
 #define ENEMY_RELOAD_TIMER 1.5f
 
-#define HOMER_BLAST_RADIUS 40
-#define HOMER_BLAST_TRIGGER_DISTANCE 35
+#define HOMER_BLAST_RADIUS 60
+#define HOMER_BLAST_TRIGGER_DISTANCE 50
 
 #define DASHER_BOUNDS \
   CLITERAL(Rectangle) { 50, 50, SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100 }
@@ -60,6 +60,7 @@ typedef struct {
   Vector2 position;
   Color color;
   Vector2 velocity;
+  ActorState state;
 } Bullet;
 
 typedef struct {
@@ -100,7 +101,7 @@ void draw_bullets(std::vector<Bullet> bullets);
 Enemy create_enemy(int current_count);
 void draw_enemies(std::vector<Enemy> enemies);
 
-bool check_bullet_collisions(Player player, std::vector<Bullet> bullets);
+bool check_bullet_collisions(Player player, std::vector<Bullet> &bullets);
 std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemies);
 std::vector<int> check_enemy_enemy_collisions(std::vector<Enemy> enemies);
 bool check_homer_blast_collisions(Player player, std::vector<Enemy> enemies);

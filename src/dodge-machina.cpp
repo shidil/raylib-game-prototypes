@@ -18,9 +18,10 @@ int main() {
   // load resources
   Texture2D background = bomaqs::load_texture("bg-grid.png");
   Sound teleport_sfx = bomaqs::load_sound("teleport2.wav");
+  Sound boom_sfx = bomaqs::load_sound("boom1.wav");
   Music bgm_music = bomaqs::load_music("n-Dimensions (Main Theme).mp3");
   bgm_music.looping = true;
-  SetMusicVolume(bgm_music, 0.35f);
+  SetMusicVolume(bgm_music, 0.25f);
 
   PlayMusicStream(bgm_music);
   SetTargetFPS(60);
@@ -130,6 +131,8 @@ int main() {
             if (enemy->state == ActorState::DESTRUCT) {
               enemy->state = ActorState::DEAD;
               // TODO: play explosion sound effect/trigger vfx
+              PlaySoundMulti(boom_sfx);
+              continue;
             }
           }
         }
@@ -164,8 +167,8 @@ int main() {
             // TODO: tweak bound rect, may be check enemy rect center point
             // inside dasher bounds?
             Rectangle enemy_rect = {
-                .x = enemy->position.x,
-                .y = enemy->position.y,
+                .x = enemy->position.x - 10,
+                .y = enemy->position.y - 10,
                 .width = 20,
                 .height = 20,
             };
@@ -193,7 +196,7 @@ int main() {
             enemy->velocity.y = vel.y;
 
             // If homer is at a set distance from player, trigger explosion with a set blast radius
-            float distance = Vector2Distance(enemy->position, game_world.player.position);
+            auto distance = std::abs(Vector2Distance(game_world.player.position, enemy->position));
             if (distance <= HOMER_BLAST_TRIGGER_DISTANCE) {
               enemy->state = ActorState::DESTRUCT;
               enemy->reload_timer = ENEMY_RELOAD_TIMER;
@@ -266,6 +269,7 @@ int main() {
   StopSoundMulti();
   UnloadMusicStream(bgm_music);
   UnloadSound(teleport_sfx);
+  UnloadSound(boom_sfx);
   UnloadTexture(background);
   CloseAudioDevice();
   CloseWindow();
@@ -360,9 +364,14 @@ std::vector<Bullet> update_bullets(std::vector<Bullet> &bullets) {
   return updated;
 }
 
-bool check_bullet_collisions(Player player, std::vector<Bullet> bullets) {
+bool check_bullet_collisions(Player player, std::vector<Bullet> &bullets) {
   for (int i = 0; i < bullets.size(); i++) {
+    if (bullets[i].state == ActorState::DEAD) {
+      continue;
+    }
+
     if (CheckCollisionCircles(player.position, PLAYER_RADIUS, bullets[i].position, BULLET_RADIUS)) {
+      bullets[i].state = ActorState::DEAD;
       return true;
     }
   }
@@ -374,8 +383,8 @@ std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemie
   std::vector<int> out;
   for (int i = 0; i < enemies.size(); i++) {
     Rectangle enemy_rect = {
-        .x = enemies[i].position.x,
-        .y = enemies[i].position.y,
+        .x = enemies[i].position.x - 10,
+        .y = enemies[i].position.y - 10,
         .width = 20,
         .height = 20,
     };
@@ -390,7 +399,7 @@ std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemie
 bool check_homer_blast_collisions(Player player, std::vector<Enemy> enemies) {
   for (int i = 0; i < enemies.size(); i++) {
     // skip non blast mode enemies. blast mode enemies will have state DESTRUCT
-    if (enemies[i].state != ActorState::DESTRUCT) {
+    if (enemies[i].state != ActorState::DESTRUCT || enemies[i].reload_timer > 0) {
       continue;
     }
 
@@ -410,15 +419,15 @@ std::vector<int> check_enemy_enemy_collisions(std::vector<Enemy> enemies) {
 
   for (int i = 0; i < enemies_count; i++) {
     Rectangle enemy_rect_1 = {
-        .x = enemies[i].position.x,
-        .y = enemies[i].position.y,
+        .x = enemies[i].position.x - 10,
+        .y = enemies[i].position.y - 10,
         .width = 20,
         .height = 20,
     };
     for (int j = i + 1; j < enemies_count; j++) {
       Rectangle enemy_rect_2 = {
-          .x = enemies[j].position.x,
-          .y = enemies[j].position.y,
+          .x = enemies[j].position.x - 10,
+          .y = enemies[j].position.y - 10,
           .width = 20,
           .height = 20,
       };
@@ -449,7 +458,7 @@ void draw_enemies(std::vector<Enemy> enemies) {
 
     switch (enemy.type) {
       case EnemyType::HOMING:
-        DrawRectangleLines(enemy.position.x, enemy.position.y, 20, 20, color);
+        DrawRectangleLines(enemy.position.x - 10, enemy.position.y - 10, 20, 20, color);
         if (enemy.reload_timer > 0) {
           // draw a blast radius indicator as a circle based on current progress towars blast from
           // reload timer calculated as a percentage function
@@ -458,11 +467,11 @@ void draw_enemies(std::vector<Enemy> enemies) {
         }
         break;
       case EnemyType::DASHER: {
-        DrawRectangleLines(enemy.position.x, enemy.position.y, 20, 20, color);
+        DrawRectangleLines(enemy.position.x - 10, enemy.position.y - 10, 20, 20, color);
         break;
       }
       default:
-        DrawRectangleLines(enemy.position.x, enemy.position.y, 20, 20, color);
+        DrawRectangleLines(enemy.position.x - 10, enemy.position.y - 10, 20, 20, color);
         break;
     }
 
@@ -471,8 +480,9 @@ void draw_enemies(std::vector<Enemy> enemies) {
       for (int i = MAX_ENEMY_TRAIL - 1; i >= 0; i -= 1) {
         auto trail_pos = enemy.trail_pos[i];
         color.a /= 2;
-        DrawRectangleLines(trail_pos.x, trail_pos.y, 20 - MAX_ENEMY_TRAIL + i,
-                           20 - MAX_ENEMY_TRAIL + i, color);
+        auto width = 20 - MAX_ENEMY_TRAIL + i;
+        DrawRectangleLines(trail_pos.x - (width / 2), trail_pos.y - (width / 2), width, width,
+                           color);
       }
     }
   }
