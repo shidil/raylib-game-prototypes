@@ -1,6 +1,7 @@
 #include "dodge-machina.h"
 
 #include <raylib.h>
+#include <raymath.h>
 
 #include <cmath>
 #include <set>
@@ -8,6 +9,7 @@
 #include <vector>
 
 #include "utils/data-loader.hpp"
+#include "utils/math.hpp"
 
 int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Dodge Machina");
@@ -53,13 +55,18 @@ int main() {
 
     // Tapping anywhere will teleport player to that position
     if (game_world.player.state == LIVE && current_gesture == GESTURE_TAP) {
-      PlaySoundMulti(teleport_sfx);
+      // PlaySoundMulti(teleport_sfx);
       game_world.player.position.x = touch_position.x;
       game_world.player.position.y = touch_position.y;
     }
 
     // If player collides with bullet, shield loss for player
     if (check_bullet_collisions(game_world.player, game_world.bullets)) {
+      game_world.player.shield -= 1;
+    }
+
+    // Check if player is caught in blast radius of a homer enemy
+    if (check_homer_blast_collisions(game_world.player, game_world.enemies)) {
       game_world.player.shield -= 1;
     }
 
@@ -115,11 +122,19 @@ int main() {
         if (enemy->reload_timer >= 0) {
           enemy->reload_timer -= GetFrameTime();
           if (enemy->reload_timer <= 0) {
-            enemy->state = ActorState::LIVE;
+            // shooters and dashers gets back to their business
+            if (enemy->state == ActorState::RELOADING) {
+              enemy->state = ActorState::LIVE;
+            }
+            // explode homers
+            if (enemy->state == ActorState::DESTRUCT) {
+              enemy->state = ActorState::DEAD;
+              // TODO: play explosion sound effect/trigger vfx
+            }
           }
         }
 
-        if (enemy->state == ActorState::RELOADING) {
+        if (enemy->state == ActorState::RELOADING || enemy->state == ActorState::DESTRUCT) {
           continue;
         }
 
@@ -169,11 +184,6 @@ int main() {
               enemy->state = ActorState::RELOADING;
               enemy->reload_timer = ENEMY_RELOAD_TIMER;
             }
-
-            // Moves enemy with respect to it's velocity and direction
-            enemy->position.x += enemy->velocity.x;
-            enemy->position.y += enemy->velocity.y;
-
             break;
           }
           case EnemyType::HOMING: {
@@ -182,13 +192,28 @@ int main() {
             enemy->velocity.x = vel.x;
             enemy->velocity.y = vel.y;
 
-            enemy->position.x += enemy->velocity.x;
-            enemy->position.y += enemy->velocity.y;
+            // If homer is at a set distance from player, trigger explosion with a set blast radius
+            float distance = Vector2Distance(enemy->position, game_world.player.position);
+            if (distance <= HOMER_BLAST_TRIGGER_DISTANCE) {
+              enemy->state = ActorState::DESTRUCT;
+              enemy->reload_timer = ENEMY_RELOAD_TIMER;
+              enemy->trail_pos.clear();
+            }
             break;
           }
           default:
             break;
         }
+
+        // store enemy current pos to it's trail
+        if (enemy->trail_pos.size() == MAX_ENEMY_TRAIL) {
+          enemy->trail_pos.erase(enemy->trail_pos.begin());
+        }
+        enemy->trail_pos.push_back(enemy->position);
+
+        // Moves enemy with respect to it's velocity and direction
+        enemy->position.x += enemy->velocity.x;
+        enemy->position.y += enemy->velocity.y;
       }
     }
 
@@ -246,12 +271,8 @@ int main() {
   CloseWindow();
 }
 
-float coordinate_angle(Vector2 pos1, Vector2 pos2) {
-  return atan2(pos1.y - pos2.y, pos1.x - pos2.x);
-}
-
 Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity) {
-  auto angle = coordinate_angle(pos1, pos2);
+  auto angle = bomaqs::coordinate_angle(pos1, pos2);
   return {(float)cos(angle) * velocity, (float)sin(angle) * velocity};
 }
 
@@ -321,6 +342,7 @@ Enemy create_enemy(int current_count) {
       .shots_fired = 0,
       .shots_per_round = RIFLE_SHOTS_PER_ROUND,
       .reload_timer = 0,
+      .trail_pos = {},
   };
   return enemy;
 }
@@ -365,6 +387,23 @@ std::vector<int> check_enemy_collisions(Player player, std::vector<Enemy> enemie
   return out;
 }
 
+bool check_homer_blast_collisions(Player player, std::vector<Enemy> enemies) {
+  for (int i = 0; i < enemies.size(); i++) {
+    // skip non blast mode enemies. blast mode enemies will have state DESTRUCT
+    if (enemies[i].state != ActorState::DESTRUCT) {
+      continue;
+    }
+
+    // check if player hit box(circle) is colliding with blast/explosion circle
+    if (CheckCollisionCircles(player.position, PLAYER_RADIUS, enemies[i].position,
+                              HOMER_BLAST_RADIUS)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 std::vector<int> check_enemy_enemy_collisions(std::vector<Enemy> enemies) {
   std::vector<int> out;
   int enemies_count = enemies.size();
@@ -402,10 +441,39 @@ void draw_bullets(std::vector<Bullet> bullets) {
 
 void draw_enemies(std::vector<Enemy> enemies) {
   for (int i = 0; i < enemies.size(); i++) {
-    Color color = enemies[i].color;
-    if (enemies[i].state == ActorState::RELOADING) {
+    auto enemy = enemies[i];
+    Color color = enemy.color;
+    if (enemy.state == ActorState::RELOADING) {
       color = GetRandomValue(0, 1) ? RED : color;
     }
-    DrawRectangleLines(enemies[i].position.x, enemies[i].position.y, 20, 20, color);
+
+    switch (enemy.type) {
+      case EnemyType::HOMING:
+        DrawRectangleLines(enemy.position.x, enemy.position.y, 20, 20, color);
+        if (enemy.reload_timer > 0) {
+          // draw a blast radius indicator as a circle based on current progress towars blast from
+          // reload timer calculated as a percentage function
+          auto blast_radi = (1 - (enemy.reload_timer / ENEMY_RELOAD_TIMER)) * HOMER_BLAST_RADIUS;
+          DrawCircleLines(enemy.position.x, enemy.position.y, blast_radi, ORANGE);
+        }
+        break;
+      case EnemyType::DASHER: {
+        DrawRectangleLines(enemy.position.x, enemy.position.y, 20, 20, color);
+        break;
+      }
+      default:
+        DrawRectangleLines(enemy.position.x, enemy.position.y, 20, 20, color);
+        break;
+    }
+
+    if (enemy.state == ActorState::LIVE && enemy.velocity.x != 0 && enemy.velocity.y != 0) {
+      // Draw movement trail
+      for (int i = MAX_ENEMY_TRAIL - 1; i >= 0; i -= 1) {
+        auto trail_pos = enemy.trail_pos[i];
+        color.a /= 2;
+        DrawRectangleLines(trail_pos.x, trail_pos.y, 20 - MAX_ENEMY_TRAIL + i,
+                           20 - MAX_ENEMY_TRAIL + i, color);
+      }
+    }
   }
 }
