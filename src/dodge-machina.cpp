@@ -60,8 +60,7 @@ int main() {
 
     // If player collides with bullet, game over for player
     if (check_bullet_collisions(game_world.player, game_world.bullets)) {
-      game_world.player.state = ActorState::DEAD;
-      game_world.state = WorldState::GAME_OVER;
+      game_world.player.shield -= 1;
     }
 
     // Player collisions with enemies
@@ -73,10 +72,15 @@ int main() {
         if (game_world.enemies[idx].state == ActorState::RELOADING) {
           game_world.enemies[idx].state = ActorState::DEAD;
         } else {
-          game_world.player.state = ActorState::DEAD;
-          game_world.state = WorldState::GAME_OVER;
+          game_world.player.shield -= 1;
         }
       }
+    }
+
+    // When player is out of shields and get hit, game over
+    if (game_world.player.shield < 0 && game_world.player.state != ActorState::DEAD) {
+      game_world.player.state = ActorState::DEAD;
+      game_world.state = WorldState::GAME_OVER;
     }
 
     // Enemy-enemy collisions, both enemies die, player receives bonus score
@@ -224,6 +228,10 @@ int main() {
     score_text.append(TextFormat("%02.00f", score));
     DrawText(score_text.data(), SCREEN_WIDTH - 120, 10, 20, ORANGE);
 
+    std::string shield_string = "Shields: ";
+    shield_string.append(std::to_string(std::max(0, game_world.player.shield)));
+    DrawText(shield_string.data(), SCREEN_WIDTH / 2 - 50, 10, 20, GRAY);
+
     EndMode2D();
     EndDrawing();
     // draw(player, enemy);
@@ -250,7 +258,8 @@ Vector2 get_homing_velocity(Vector2 pos1, Vector2 pos2, int velocity) {
 GameWorld create_game_world() {
   Player player = {.position = {.x = SCREEN_WIDTH / 2, .y = SCREEN_HEIGHT - 200},
                    .color = RED,
-                   .state = ActorState::LIVE};
+                   .state = ActorState::LIVE,
+                   .shield = INITIAL_PLAYER_SHIELDS};
   std::vector<Bullet> bullets;
   std::vector<Enemy> enemies;
 

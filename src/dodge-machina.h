@@ -5,7 +5,13 @@
 #define SCREEN_WIDTH 540
 #define SCREEN_HEIGHT 960
 #define FRAME_RATE 60
+
 #define PLAYER_RADIUS 20
+#define INITIAL_PLAYER_SHIELDS 2
+
+#define ENEMY_KILL_BONUS 50
+#define ENEMY_SELF_KILL_BONUS 100
+
 #define BULLET_RADIUS 5
 #define BULLET_FIRE_RATE_MIN 15
 #define BULLET_FIRE_RATE_MAX 10
@@ -13,17 +19,18 @@
 #define RIFLE_SHOTS_PER_ROUND 25
 #define BAZOOKA_SHOTS_PER_ROUND 1
 #define BULLET_VELOCITY 10
+#define FIRE_RATE_RAMPUP_INTERVAL 500
+
 #define MAX_ENEMIES 4
 #define DASHER_VELOCITY 8
 #define HOMING_VELOCITY 3
 #define ENEMY_RELOAD_TIMER 1.5f
+
 #define DASHER_BOUNDS \
   CLITERAL(Rectangle) { 50, 50, SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100 }
 #define BULLET_BOUNDS \
   CLITERAL(Rectangle) { -50, -50, SCREEN_WIDTH + 100, SCREEN_HEIGHT + 100 }
 
-#define ENEMY_SELF_KILL_BONUS 50
-#define FIRE_RATE_RAMPUP_INTERVAL 500
 
 enum EnemyType {
   SHOOTER,
@@ -65,6 +72,7 @@ typedef struct {
   Vector2 position;
   Color color;
   ActorState state;
+  int shield;
 } Player;
 
 typedef struct {
