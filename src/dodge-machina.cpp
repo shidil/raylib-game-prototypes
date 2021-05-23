@@ -30,6 +30,7 @@ int main() {
   float score = 0;
 
   GameWorld game_world = create_game_world();
+  int total_enemies_spawned = 0;
 
   // Main game loop runs FRAME_RATE times a second
   while (!WindowShouldClose()) {
@@ -48,6 +49,7 @@ int main() {
       game_world = create_game_world();
       frames_count = 0;
       score = 0;
+      total_enemies_spawned = 0;
     }
 
     // Input handling
@@ -107,8 +109,9 @@ int main() {
       int enemies_count = game_world.enemies.size();
       if (enemies_count < MAX_ENEMIES &&
           frames_count % (FRAME_RATE * (enemies_count ? 5 : 1)) == 0) {
-        game_world.enemies.push_back(create_enemy(enemies_count));
+        game_world.enemies.push_back(create_enemy(total_enemies_spawned));
         enemies_count += 1;
+        total_enemies_spawned += 1;
       }
 
       // update enemy, shoot, dash, follow
@@ -307,17 +310,17 @@ Bullet create_bullet(Enemy enemy, Player player) {
 }
 
 Color enemy_colors[3] = {DARKGREEN, BLUE, VIOLET};
-EnemyType enemy_order[MAX_ENEMIES] = {EnemyType::SHOOTER, EnemyType::DASHER, EnemyType::HOMING,
+EnemyType enemy_order[MAX_ENEMIES] = {EnemyType::SHOOTER, EnemyType::HOMING, EnemyType::DASHER,
                                       EnemyType::DASHER};
 
-Enemy create_enemy(int current_count) {
+Enemy create_enemy(int total_spawned) {
   // Avoid overlapping enemy and player, as well as other enemies
   // Keep min x distance from other enemies and player
   // Some randonmess in fire rate and other timings
   // Enemy spawn probability
   float x, y;
-  EnemyType type = enemy_order[current_count % MAX_ENEMIES];
-  if (current_count == 0) {
+  EnemyType type = enemy_order[total_spawned % MAX_ENEMIES];
+  if (total_spawned == 0) {
     // First enemy is fixed
     x = (SCREEN_WIDTH / 2) + GetRandomValue(-100, 100);
     y = 100 + GetRandomValue(-25, 25);
