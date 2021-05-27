@@ -1,37 +1,30 @@
-/*******************************************************************************************
- *
- *   raylib [core] example - Basic 3d example
- *
- *   Welcome to raylib!
- *
- *   To compile example, just press F5.
- *   Note that compiled executable is placed in the same folder as .c file
- *
- *   You can find all basic examples on C:\raylib\raylib\examples folder or
- *   raylib official webpage: www.raylib.com
- *
- *   Enjoy using raylib. :)
- *
- *   This example has been created using raylib 1.0 (www.raylib.com)
- *   raylib is licensed under an unmodified zlib/libpng license (View raylib.h
- *for details)
- *
- *   Copyright (c) 2013-2020 Ramon Santamaria (@raysan5)
- *
- ********************************************************************************************/
-
 #include <raylib.h>
+#include <raymath.h>
 
+#include <iostream>
 #include <vector>
+
+#include "utils/data-loader.hpp"
+
+#define FRAME_RATE 60
+#define CRAYOLA \
+  CLITERAL(Color) { 185, 226, 140, 255 }
+#define PURPLE_NAVY \
+  CLITERAL(Color) { 91, 80, 122, 255 }
+#define DARK_BULE_GRAY \
+  CLITERAL(Color) { 91, 97, 138, 255 }
+#define MAX_G_YELLOW \
+  CLITERAL(Color) { 214, 216, 79, 255 }
 
 using namespace std;
 
 void drawSnake(vector<Vector2>);
 void moveSnake(vector<Vector2> &currentSnake, Vector2 direction);
+void camera_follow_smooth(Camera2D *camera, Vector2 player, float delta, int width, int height);
 
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 450;
-const int SNAKE_SCALE = 5;
+const int SCREEN_WIDTH = 450;
+const int SCREEN_HEIGHT = 800;
+const int SNAKE_SCALE = 25;
 
 int main() {
   // Initialization
@@ -42,7 +35,15 @@ int main() {
   camera.zoom = 1.0f;
 
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Snake Dancer");
-  SetTargetFPS(10);  // Set our game to run at 144 frames-per-second
+  InitAudioDevice();
+
+  // load resources
+  Music bgm_music = bomaqs::load_music("Funky-Chiptune.mp3");
+  bgm_music.looping = true;
+  SetMusicVolume(bgm_music, 0.9f);
+  PlayMusicStream(bgm_music);
+
+  SetTargetFPS(FRAME_RATE);  // Set our game to run at 144 frames-per-second
   //--------------------------------------------------------------------------------------
 
   vector<Vector2> positions = {
@@ -52,35 +53,87 @@ int main() {
       (Vector2){8 + SNAKE_SCALE, SCREEN_HEIGHT / 2}, (Vector2){9 + SNAKE_SCALE, SCREEN_HEIGHT / 2},
   };
 
-  Vector2 direction = {1, 0};
+  const float music_bpm = 129.0f;
+  const float beat_duration = 60.0f / 60.0f; //music_bpm;
+
+  Vector2 prev_direction = {1, 0};
+  float beat_timer = beat_duration;
+  bool input_mode = false;
 
   // Main game loop
   while (!WindowShouldClose()) {
-    if (IsKeyDown(KEY_RIGHT)) {
-      direction.x = 1;
-      direction.y = 0;
-    } else if (IsKeyDown(KEY_LEFT)) {
-      direction.x = -1;
-      direction.y = 0;
-    } else if (IsKeyDown(KEY_DOWN)) {
-      direction.y = 1;
-      direction.x = 0;
-    }
-    else if (IsKeyDown(KEY_UP)) {
-      direction.y = -1;
-      direction.x = 0;
+    UpdateMusicStream(bgm_music);
+
+    Vector2 direction = {0, 0};
+    float delta_time = GetFrameTime();
+
+    beat_timer -= delta_time;
+
+    bool is_hit = (beat_timer <= 0 || beat_timer < 0.2);
+    auto key_pressed = GetKeyPressed();
+
+    switch (key_pressed) {
+      case KEY_UP: {
+        direction = {0, -1};
+        break;
+      }
+      case KEY_RIGHT: {
+        direction = {1, 0};
+        break;
+      }
+      case KEY_DOWN: {
+        direction = {0, 1};
+        break;
+      }
+      case KEY_LEFT: {
+        direction = {-1, 0};
+        break;
+      }
+      default:
+        direction = prev_direction;
+        break;
     }
 
+    if (is_hit) {
+      prev_direction = direction;
+    } else {
+      direction = prev_direction;
+    }
+
+    if (beat_timer <= 0) {
+      beat_timer = beat_duration;
+      moveSnake(positions, direction);
+    }
+
+    // moveSnake(positions, direction);
+    // camera_follow_smooth(&camera, positions[0], delta_time, SCREEN_WIDTH, SCREEN_HEIGHT);
+
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    ClearBackground(CRAYOLA);
     BeginMode2D(camera);
-    moveSnake(positions, direction);
+
     drawSnake(positions);
+
+    if (beat_timer == beat_duration) {
+      DrawText("XX", 10, 10, 20, BLUE);
+    }
+
+    if (key_pressed) {
+      if (is_hit) {
+        DrawText("Hit", 100, 10, 20, DARKGREEN);
+      } else {
+        DrawText("Miss", 100, 10, 20, RED);
+      }
+    }
+
+    DrawText(to_string(beat_timer).data(), 350, 10, 20, WHITE);
+
     EndMode2D();
     EndDrawing();
   }
 
   // De-Initialization
+  UnloadMusicStream(bgm_music);
   //--------------------------------------------------------------------------------------
   CloseWindow();  // Close window and OpenGL context
   //--------------------------------------------------------------------------------------
@@ -89,6 +142,10 @@ int main() {
 }
 
 void moveSnake(vector<Vector2> &snake, Vector2 direction) {
+  if (Vector2Length(direction) == 0) {
+    return;
+  }
+
   int head = 0;
   int tail = snake.size();
   Vector2 prev = {snake[0].x, snake[0].y};
@@ -105,6 +162,21 @@ void moveSnake(vector<Vector2> &snake, Vector2 direction) {
 
 void drawSnake(vector<Vector2> positions) {
   for (int i = 0; i < positions.size(); i++) {
-    DrawRectangle(positions[i].x, positions[i].y, SNAKE_SCALE, SNAKE_SCALE, YELLOW);
+    DrawRectangle(positions[i].x, positions[i].y, SNAKE_SCALE, SNAKE_SCALE, PURPLE_NAVY);
+  }
+}
+
+void camera_follow_smooth(Camera2D *camera, Vector2 player, float delta, int width, int height) {
+  static float minSpeed = 30;
+  static float minEffectLength = 10;
+  static float fractionSpeed = 0.8f;
+
+  camera->offset = (Vector2){width / 2.0f, height / 2.0f};
+  Vector2 diff = Vector2Subtract(player, camera->target);
+  float length = Vector2Length(diff);
+
+  if (length > minEffectLength) {
+    float speed = fmaxf(fractionSpeed * length, minSpeed);
+    camera->target = Vector2Add(camera->target, Vector2Scale(diff, speed * delta / length));
   }
 }
