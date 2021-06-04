@@ -18,8 +18,9 @@
 
 using namespace std;
 
-void drawSnake(vector<Vector2>);
-void moveSnake(vector<Vector2> &currentSnake, Vector2 direction);
+void draw_snake(vector<Vector2>);
+void draw_beat_indicators(float progress);
+void move_snake(vector<Vector2> &currentSnake, Vector2 direction);
 void camera_follow_smooth(Camera2D *camera, Vector2 player, float delta, int width, int height);
 
 const int SCREEN_WIDTH = 450;
@@ -54,11 +55,12 @@ int main() {
   };
 
   const float music_bpm = 129.0f;
-  const float beat_duration = 60.0f / 60.0f; //music_bpm;
+  const float beat_duration = 60.0f / music_bpm;  // music_bpm;
 
   Vector2 prev_direction = {1, 0};
   float beat_timer = beat_duration;
   bool input_mode = false;
+  Vector2 center_circle = {SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75};
 
   // Main game loop
   while (!WindowShouldClose()) {
@@ -69,7 +71,9 @@ int main() {
 
     beat_timer -= delta_time;
 
-    bool is_hit = (beat_timer <= 0 || beat_timer < 0.2);
+    auto beat_progress = 1 - (beat_timer / beat_duration);
+    bool is_hit = CheckCollisionCircles((Vector2){center_circle.x * beat_progress, center_circle.y},
+                                        20, center_circle, 25);
     auto key_pressed = GetKeyPressed();
 
     switch (key_pressed) {
@@ -102,17 +106,18 @@ int main() {
 
     if (beat_timer <= 0) {
       beat_timer = beat_duration;
-      moveSnake(positions, direction);
+      move_snake(positions, direction);
     }
 
-    // moveSnake(positions, direction);
+    // move_snake(positions, direction);
     // camera_follow_smooth(&camera, positions[0], delta_time, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     BeginDrawing();
     ClearBackground(CRAYOLA);
     BeginMode2D(camera);
 
-    drawSnake(positions);
+    draw_beat_indicators(beat_progress);
+    draw_snake(positions);
 
     if (beat_timer == beat_duration) {
       DrawText("XX", 10, 10, 20, BLUE);
@@ -141,7 +146,7 @@ int main() {
   return 0;
 }
 
-void moveSnake(vector<Vector2> &snake, Vector2 direction) {
+void move_snake(vector<Vector2> &snake, Vector2 direction) {
   if (Vector2Length(direction) == 0) {
     return;
   }
@@ -160,10 +165,16 @@ void moveSnake(vector<Vector2> &snake, Vector2 direction) {
   snake[head].y += direction.y * SNAKE_SCALE;
 }
 
-void drawSnake(vector<Vector2> positions) {
+void draw_snake(vector<Vector2> positions) {
   for (int i = 0; i < positions.size(); i++) {
     DrawRectangle(positions[i].x, positions[i].y, SNAKE_SCALE, SNAKE_SCALE, PURPLE_NAVY);
   }
+}
+
+void draw_beat_indicators(float progress) {
+  DrawCircleLines(SCREEN_WIDTH / 2, SCREEN_HEIGHT - 75, 25, GRAY);
+  DrawCircle(SCREEN_WIDTH / 2 * progress, SCREEN_HEIGHT - 75, 20, DARK_BULE_GRAY);
+  DrawCircle(SCREEN_WIDTH - (SCREEN_WIDTH / 2 * progress), SCREEN_HEIGHT - 75, 20, DARK_BULE_GRAY);
 }
 
 void camera_follow_smooth(Camera2D *camera, Vector2 player, float delta, int width, int height) {
